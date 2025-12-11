@@ -163,7 +163,7 @@ if (config.NODE_ENV !== 'production') {
         routes: routes 
       });
     } catch (err: any) {
-      res.status(500).json({ error: 'Unable to enumerate routes', details: err.message });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Unable to enumerate routes', details: err.message });
     }
   });
 }
