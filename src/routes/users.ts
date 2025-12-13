@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { userController, addressController, adminUserController } from '../di/container';
 import { authenticate } from '../shared/middleware/auth';
-import { isShopOwnerOrAdmin, isAdmin } from '../shared/middleware/authorize';
+import { isTeacherOrAdmin, isAdmin } from '../shared/middleware/authorize';
 import { validate } from '../shared/middleware/validate';
 import { updateProfileSchema } from '../shared/validation/user.schema';
 import { UserMapper } from '../presentation/dto/user/User.dto';

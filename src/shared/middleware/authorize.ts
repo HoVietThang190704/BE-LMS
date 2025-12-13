@@ -30,6 +30,6 @@ export const authorizeRoles = (...roles: string[]) => {
 
 export const isAdmin = authorizeRoles('admin');
 
-export const isShopOwnerOrAdmin = authorizeRoles('shop_owner', 'admin');
+export const isTeacherOrAdmin = authorizeRoles('teacher', 'admin');
 
-export const isAuthenticated = authorizeRoles('customer', 'shop_owner', 'admin');
+export const isAuthenticated = authorizeRoles('customer', 'teacher', 'admin');
