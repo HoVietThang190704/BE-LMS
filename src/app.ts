@@ -20,6 +20,7 @@ import { HTTP_STATUS } from './shared/constants/httpStatus';
 // Import routes
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
+import { courseRoutes } from './routes/courses';
 
 const app = express();
 
@@ -103,6 +104,69 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/courses', courseRoutes);
+// Small debug: print registered routes (non-production only)
+if (config.NODE_ENV !== 'production') {
+
+  // --- Hàm phụ trợ: Lấy danh sách routes ---
+  const getRegisteredRoutes = (stack: any[]): string[] => {
+    const routeList: string[] = [];
+
+    stack.forEach((layer: any) => {
+      if (layer.route) {
+        // A. Route trực tiếp (app.get, app.post...)
+        const methods = Object.keys(layer.route.methods).map(m => m.toUpperCase()).join(',');
+        routeList.push(`${methods.padEnd(7)} ${layer.route.path}`);
+      } else if (layer.name === 'router' && layer.handle.stack) {
+        // B. Router lồng nhau (app.use('/path', router))
+        // Lưu ý: Express lưu prefix dưới dạng Regex, rất khó để convert ngược lại thành string chính xác 100%
+        // Đoạn code dưới đây cố gắng đoán prefix từ regex
+        let prefix = '';
+        if (layer.regexp) {
+           const regStr = layer.regexp.toString();
+           // Cố gắng parse string từ regex (VD: /^\/api\/courses\/?(?=\/|$)/i)
+           const match = regStr.match(/^\/\^\\(.*?)\\\/.*$/); 
+           if (match && match[1]) {
+             prefix = '/' + match[1].replace(/\\/g, ''); 
+           }
+        }
+
+        layer.handle.stack.forEach((handler: any) => {
+          if (handler.route) {
+            const methods = Object.keys(handler.route.methods).map(m => m.toUpperCase()).join(',');
+            // Ghép prefix (nếu đoán được) với path con
+            const fullPath = (prefix + handler.route.path).replace('//', '/'); 
+            routeList.push(`${methods.padEnd(7)} ${fullPath}`);
+          }
+        });
+      }
+    });
+    return routeList;
+  };
+
+  // --- A. In ra console khi khởi động ---
+  try {
+    const routes = getRegisteredRoutes(app._router.stack);
+    logger.info('📍 Registered routes:\n' + routes.join('\n'));
+  } catch (err) {
+    logger.warn('⚠️ Unable to enumerate routes', err);
+  }
+
+  // --- B. Tạo API debug để xem trên trình duyệt ---
+  // GET /api/debug/routes
+  app.get('/api/debug/routes', (_req, res) => {
+    try {
+      const routes = getRegisteredRoutes(app._router.stack);
+      res.json({ 
+        success: true, 
+        total: routes.length,
+        routes: routes 
+      });
+    } catch (err: any) {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Unable to enumerate routes', details: err.message });
+    }
+  });
+}
 
 // Setup Swagger documentation TRƯỚC khi định nghĩa 404 handler
 setupSwagger(app);
