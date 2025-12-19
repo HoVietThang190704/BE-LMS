@@ -30,6 +30,7 @@ import { GetCoursesUseCase } from '../domain/usecases/course/GetCourses.usecase'
 import { DeleteCourseUseCase } from '../domain/usecases/course/DeleteCourse.usecase';
 import { GetCourseByIdUseCase } from '../domain/usecases/course/GetCourseById.usecase';
 import { UpdateCourseUseCase } from '../domain/usecases/course/UpdateCourse.usecase';
+import { GetPublicCoursesUseCase } from '../domain/usecases/course/GetPublicCourses.usecase';
 
 // ==================== CONTROLLERS ====================
 import { UserController } from '../presentation/controllers/UserController';
@@ -68,6 +69,7 @@ const getCoursesUseCase = new GetCoursesUseCase(courseRepository);
 const deleteCourseUseCase = new DeleteCourseUseCase(courseRepository);
 const getCourseByIdUseCase = new GetCourseByIdUseCase(courseRepository);
 const updateCourseUseCase = new UpdateCourseUseCase(courseRepository);
+const getPublicCoursesUseCase = new GetPublicCoursesUseCase(courseRepository);
 
 // ==================== CONTROLLER INSTANCES ====================
 export const userController = new UserController(
@@ -100,7 +102,8 @@ export const courseController = new CourseController(
   getCoursesUseCase,
   deleteCourseUseCase,
   getCourseByIdUseCase,
-  updateCourseUseCase
+  updateCourseUseCase,
+  getPublicCoursesUseCase
 );
 
 // ==================== EXPORTS FOR REUSE ====================

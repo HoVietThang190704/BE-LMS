@@ -20,6 +20,7 @@ export class CreateCourseUseCase {
       input.ownerId,
       undefined, // _id (để DB tự sinh)
       input.description,
+      input.image,
       input.tags,
       'active', // <--- UseCase tự set cứng giá trị mặc định tại đây
       undefined, // createdAt
