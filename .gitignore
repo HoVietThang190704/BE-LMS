@@ -1,10 +1,13 @@
-node_modules/
+node_modules
+
+# Environment and service account files
+.env
+.env.local
+firebase-service-account.json
+
+# Build and logs
 dist/
 logs/
-.env
-.env.*
-.npmrc
+
+# Misc
 .DS_Store
-.idea/
-.vscode/
-coverage/
