@@ -34,6 +34,46 @@ const options: swaggerJSDoc.Options = {
       },
       schemas: {
         Error: {
+                  Course: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string', example: 'Lập trình Python cơ bản 1' },
+                      courseCode: { type: 'string', example: 'CS101' },
+                      term: { type: 'string', example: '2025-2026' },
+                      schedule: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            dayOfWeek: { type: 'integer', example: 2 },
+                            startTime: { type: 'string', example: '07:00' },
+                            endTime: { type: 'string', example: '09:00' },
+                            room: { type: 'string', example: 'B101' }
+                          }
+                        },
+                        example: [
+                          { "dayOfWeek": 2, "startTime": "07:00", "endTime": "09:00", "room": "B101" },
+                          { "dayOfWeek": 4, "startTime": "07:00", "endTime": "09:00", "room": "B101" }
+                        ]
+                      },
+                      maxStudents: { type: 'integer', example: 0 },
+                      startDate: { type: 'string', format: 'date', example: '2025-12-14' },
+                      endDate: { type: 'string', format: 'date', example: '2026-01-14' }
+                    },
+                    required: ['name', 'courseCode', 'term', 'schedule', 'maxStudents', 'startDate', 'endDate'],
+                    example: {
+                      name: 'Lập trình Python cơ bản 1',
+                      courseCode: 'CS101',
+                      term: '2025-2026',
+                      schedule: [
+                        { dayOfWeek: 2, startTime: '07:00', endTime: '09:00', room: 'B101' },
+                        { dayOfWeek: 4, startTime: '07:00', endTime: '09:00', room: 'B101' }
+                      ],
+                      maxStudents: 0,
+                      startDate: '2025-12-14',
+                      endDate: '2026-01-14'
+                    }
+                  },
           type: 'object',
           properties: {
             success: {

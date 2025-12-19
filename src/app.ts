@@ -14,6 +14,7 @@ import { setupSwagger } from './shared/swagger/setup';
 import { SocketService } from './services/socket/SocketService';
 import { setIO } from './services/socket/socketManager';
 import notificationRoutes from './routes/notifications';
+import sectionRoutes from './routes/sections';
 import { initFirebaseAdmin } from './lib/firebaseAdmin';
 import { HTTP_STATUS } from './shared/constants/httpStatus';
 
@@ -79,7 +80,7 @@ initFirebaseAdmin();
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    service: 'dacn-fresh-food-platform',
+    service: 'lms-platform',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: config.NODE_ENV,
@@ -105,6 +106,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/sections', sectionRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
 
@@ -174,15 +176,14 @@ setupSwagger(app);
 // API documentation
 app.get('/api', (req, res) => {
   res.json({
-    message: '🌱 Fresh Food Platform API',
+    message: '🎓 LMS Platform API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
-      products: '/api/products',
-      categories: '/api/categories',
-      orders: '/api/orders',
-      wishlist: '/api/wishlist',
       users: '/api/users',
+      courses: '/api/courses',
+      sections: '/api/sections',
+      notifications: '/api/notifications',
       health: '/health'
     },
     documentation: '/api/docs'
@@ -249,7 +250,7 @@ async function startServer() {
 
     // CRITICAL: Start listening IMMEDIATELY so Render detects the port
     server.listen(PORT, '0.0.0.0', () => {
-      logger.info(`🚀 Fresh Food Platform API đang chạy tại ${protocol}://${localIp}:${PORT}`);
+      logger.info(`🚀 LMS Platform API đang chạy tại ${protocol}://${localIp}:${PORT}`);
       logger.info(`📊 Health check: ${protocol}://${localIp}:${PORT}/health`);
       logger.info(`📖 API docs: ${protocol}://${localIp}:${PORT}/api`);
       logger.info(`📚 Swagger docs: ${protocol}://${localIp}:${PORT}/api/docs`);
