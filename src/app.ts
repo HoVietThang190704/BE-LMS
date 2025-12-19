@@ -79,7 +79,7 @@ initFirebaseAdmin();
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    service: 'dacn-fresh-food-platform',
+    service: 'EduVN LMS API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: config.NODE_ENV,
@@ -174,15 +174,15 @@ setupSwagger(app);
 // API documentation
 app.get('/api', (req, res) => {
   res.json({
-    message: '🌱 Fresh Food Platform API',
+    message: '🌱 EduVN LMS API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
-      products: '/api/products',
-      categories: '/api/categories',
-      orders: '/api/orders',
-      wishlist: '/api/wishlist',
       users: '/api/users',
+      notifications: '/api/notifications',
+      tickets: '/api/tickets',
+      courses: '/api/courses',
+      upload: '/api/upload',
       health: '/health'
     },
     documentation: '/api/docs'
@@ -249,7 +249,7 @@ async function startServer() {
 
     // CRITICAL: Start listening IMMEDIATELY so Render detects the port
     server.listen(PORT, '0.0.0.0', () => {
-      logger.info(`🚀 Fresh Food Platform API đang chạy tại ${protocol}://${localIp}:${PORT}`);
+      logger.info(`🚀 EduVN LMS API đang chạy tại ${protocol}://${localIp}:${PORT}`);
       logger.info(`📊 Health check: ${protocol}://${localIp}:${PORT}/health`);
       logger.info(`📖 API docs: ${protocol}://${localIp}:${PORT}/api`);
       logger.info(`📚 Swagger docs: ${protocol}://${localIp}:${PORT}/api/docs`);
