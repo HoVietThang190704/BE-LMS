@@ -12,6 +12,10 @@ if (process.env.NODE_ENV !== 'production') {
   courseRoutes.get('/_ping', (_req, res) => res.json({ success: true, message: 'courses router mounted' }));
 }
 
+// Public endpoint: list public courses without requiring authentication
+// GET /api/courses/public
+courseRoutes.get('/public', (req, res) => courseController.getPublicList(req, res));
+
 /**
  * @swagger
  * components:
@@ -45,6 +49,9 @@ if (process.env.NODE_ENV !== 'production') {
  *             - active
  *             - archived
  *           example: active
+ *         image:
+ *           type: string
+ *           example: /images/demo/test1.jpg
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -111,6 +118,37 @@ if (process.env.NODE_ENV !== 'production') {
  *         description: Dữ liệu không hợp lệ hoặc mã môn đã tồn tại
  *       401:
  *         description: Chưa đăng nhập
+ */
+/*
+ * Thêm thuộc tính 'image' vào tài liệu Swagger cho POST/PUT request bodies
+ */
+/**
+ * @swagger
+ * /api/courses:
+ *   post:
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 example: /images/demo/test1.jpg
+ */
+/**
+ * @swagger
+ * /api/courses/{id}:
+ *   put:
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 example: /images/demo/test1.jpg
  */
 courseRoutes.post(
   '/',

@@ -17,6 +17,9 @@ export const createCourseSchema = z.object({
             
         description: z.string()
             .optional(),
+
+        image: z.string()
+            .optional(),
             
         tags: z.array(z.string())
             .optional()
@@ -34,6 +37,9 @@ export const updateCourseSchema = z.object({
             .optional(),
             
         description: z.string()
+            .optional(),
+
+        image: z.string()
             .optional(),
             
         tags: z.array(z.string())

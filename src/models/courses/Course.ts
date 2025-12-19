@@ -8,6 +8,7 @@ export interface CourseDocument extends Document {
   code: string;
   name: string;
   description?: string;
+  image?: string;
   ownerId: mongoose.Types.ObjectId; // Lưu ý kiểu ObjectId của Mongoose
   tags?: string[];
   status: 'active' | 'archived';
@@ -30,6 +31,9 @@ const CourseSchema: Schema = new Schema({
   },
   description: { 
     type: String 
+  },
+  image: {
+    type: String
   },
   ownerId: { 
     type: Schema.Types.ObjectId, 

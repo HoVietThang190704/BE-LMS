@@ -23,7 +23,8 @@ export class CourseController {
     private getCoursesUseCase: GetCoursesUseCase,
     private deleteCourseUseCase: DeleteCourseUseCase,
     private getCourseByIdUseCase: GetCourseByIdUseCase,
-    private updateCourseUseCase: UpdateCourseUseCase
+    private updateCourseUseCase: UpdateCourseUseCase,
+    private getPublicCoursesUseCase?: any
   ) {}
 
   /**
@@ -35,13 +36,14 @@ export class CourseController {
       // 1. Lấy userId từ token (thông qua hàm helper requireAuth)
       const { userId } = requireAuth(req);
       
-      const { code, name, description, tags } = req.body;
+      const { code, name, description, tags, image } = req.body;
 
       // 2. Gọi Use Case
       const newCourse = await this.createCourseUseCase.execute({
         code,
         name,
         description,
+        image,
         tags,
         ownerId: userId
       });
@@ -173,6 +175,36 @@ export class CourseController {
         return;
       }
       handleControllerError(res, error, 'Lỗi server khi lấy chi tiết môn học');
+    }
+  }
+
+  /**
+   * GET /api/courses/public
+   * Lấy danh sách công khai (dành cho student / client)
+   */
+  async getPublicList(req: Request, res: Response): Promise<void> {
+    try {
+      const keyword = req.query.keyword as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      if (!this.getPublicCoursesUseCase) {
+        // Nếu usecase không được inject (fallback)
+        const { GetPublicCoursesUseCase } = require('../../domain/usecases/course/GetPublicCourses.usecase');
+        const { courseRepository } = require('../../di/container');
+        // @ts-ignore
+        this.getPublicCoursesUseCase = new GetPublicCoursesUseCase(courseRepository);
+      }
+
+      const { data, total } = await this.getPublicCoursesUseCase.execute(keyword, page, limit);
+
+      sendSuccess(res, {
+        message: 'Lấy danh sách khóa học công khai thành công',
+        data,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
+      });
+    } catch (error: any) {
+      handleControllerError(res, error, 'Lỗi server khi lấy danh sách công khai');
     }
   }
 

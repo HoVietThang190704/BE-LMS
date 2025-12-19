@@ -6,6 +6,7 @@ export interface ICourse {
   code: string;
   name: string;
   description?: string;
+  image?: string;
   ownerId: string;
   tags?: string[];
   status: 'active' | 'archived';
@@ -21,6 +22,7 @@ export class Course implements ICourse {
     public ownerId: string,
     public _id?: string,
     public description?: string,
+    public image?: string,
     public tags?: string[],
     public status: 'active' | 'archived' = 'active',
     public createdAt?: Date,

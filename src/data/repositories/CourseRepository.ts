@@ -37,6 +37,29 @@ export class CourseRepository implements ICourseRepository {
   };
 }
 
+  // Public list (no owner filter)
+  async findAll(keyword?: string, page = 1, limit = 10): Promise<{ data: ICourse[], total: number }> {
+    const query: any = { status: 'active' };
+    if (keyword) {
+      query.$or = [
+        { name: { $regex: keyword, $options: 'i' } },
+        { code: { $regex: keyword, $options: 'i' } }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [total, docs] = await Promise.all([
+      CourseModel.countDocuments(query),
+      CourseModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
+    ]);
+
+    return {
+      total,
+      data: docs.map(doc => this.mapToEntity(doc))
+    };
+  }
+
   // 3. Tìm môn học theo ID
   async findById(id: string): Promise<ICourse | null> {
     const course = await CourseModel.findById(id).lean();
