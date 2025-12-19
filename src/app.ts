@@ -14,6 +14,7 @@ import { setupSwagger } from './shared/swagger/setup';
 import { SocketService } from './services/socket/SocketService';
 import { setIO } from './services/socket/socketManager';
 import notificationRoutes from './routes/notifications';
+import sectionRoutes from './routes/sections';
 import { initFirebaseAdmin } from './lib/firebaseAdmin';
 import { HTTP_STATUS } from './shared/constants/httpStatus';
 
@@ -105,6 +106,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/sections', sectionRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
 
@@ -181,8 +183,9 @@ app.get('/api', (req, res) => {
       users: '/api/users',
       notifications: '/api/notifications',
       tickets: '/api/tickets',
-      courses: '/api/courses',
       upload: '/api/upload',
+      courses: '/api/courses',
+      sections: '/api/sections',
       health: '/health'
     },
     documentation: '/api/docs'
