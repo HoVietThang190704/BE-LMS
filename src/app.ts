@@ -23,6 +23,7 @@ import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { courseRoutes } from './routes/courses';
 import publicCourseRouter from './routes/course/router';
+import homeRoutes from './routes/home';
 
 const app = express();
 
@@ -108,6 +109,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/sections', sectionRoutes);
+app.use('/api/home', homeRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
 

@@ -33,47 +33,33 @@ const options: swaggerJSDoc.Options = {
         }
       },
       schemas: {
+        Course: {
+          type: 'object',
+          properties: {
+            _id: { type: 'string', example: '64af9f6b...' },
+            code: { type: 'string', example: 'CS101' },
+            name: { type: 'string', example: 'Nhập môn lập trình' },
+            description: { type: 'string', example: 'Khóa học nhập môn lập trình với Python' },
+            image: { type: 'string', example: '/images/demo/test1.jpg' },
+            ownerId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            tags: { type: 'array', items: { type: 'string' }, example: ['python','basic'] },
+            status: { type: 'string', enum: ['active','archived'], example: 'active' },
+            credits: { type: 'number', example: 3 },
+            instructor: { type: 'string', example: 'Nguyễn Văn A' },
+            schedule: { type: 'string', example: 'Mon, Wed 07:00 - 09:00' },
+            room: { type: 'string', example: 'B101' },
+            enrolled: { type: 'number', example: 12 },
+            capacity: { type: 'number', example: 60 },
+            syllabus: {
+              type: 'array',
+              items: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' } } },
+              example: [{ title: 'Introduction', description: 'Course overview' }, { title: 'Basics', description: 'Core topics' }]
+            },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+          }
+        },
         Error: {
-                  Course: {
-                    type: 'object',
-                    properties: {
-                      name: { type: 'string', example: 'Lập trình Python cơ bản 1' },
-                      courseCode: { type: 'string', example: 'CS101' },
-                      term: { type: 'string', example: '2025-2026' },
-                      schedule: {
-                        type: 'array',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            dayOfWeek: { type: 'integer', example: 2 },
-                            startTime: { type: 'string', example: '07:00' },
-                            endTime: { type: 'string', example: '09:00' },
-                            room: { type: 'string', example: 'B101' }
-                          }
-                        },
-                        example: [
-                          { "dayOfWeek": 2, "startTime": "07:00", "endTime": "09:00", "room": "B101" },
-                          { "dayOfWeek": 4, "startTime": "07:00", "endTime": "09:00", "room": "B101" }
-                        ]
-                      },
-                      maxStudents: { type: 'integer', example: 0 },
-                      startDate: { type: 'string', format: 'date', example: '2025-12-14' },
-                      endDate: { type: 'string', format: 'date', example: '2026-01-14' }
-                    },
-                    required: ['name', 'courseCode', 'term', 'schedule', 'maxStudents', 'startDate', 'endDate'],
-                    example: {
-                      name: 'Lập trình Python cơ bản 1',
-                      courseCode: 'CS101',
-                      term: '2025-2026',
-                      schedule: [
-                        { dayOfWeek: 2, startTime: '07:00', endTime: '09:00', room: 'B101' },
-                        { dayOfWeek: 4, startTime: '07:00', endTime: '09:00', room: 'B101' }
-                      ],
-                      maxStudents: 0,
-                      startDate: '2025-12-14',
-                      endDate: '2026-01-14'
-                    }
-                  },
           type: 'object',
           properties: {
             success: {

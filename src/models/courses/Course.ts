@@ -47,7 +47,17 @@ const CourseSchema: Schema = new Schema({
     type: String, 
     enum: ['active', 'archived'], 
     default: 'active' 
-  }
+  },
+  credits: { type: Number, default: 3 },
+  instructor: { type: String, default: null },
+  schedule: { type: String, default: null },
+  room: { type: String, default: null },
+  enrolled: { type: Number, default: 0 },
+  capacity: { type: Number, default: 60 },
+  syllabus: [{
+    title: { type: String },
+    description: { type: String }
+  }]
 }, { 
   timestamps: true // Tự động tạo createdAt, updatedAt
 });

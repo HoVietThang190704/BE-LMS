@@ -96,11 +96,39 @@ courseRoutes.get('/public', (req, res) => courseController.getPublicList(req, re
  *               description:
  *                 type: string
  *                 example: Khóa học nhập môn lập trình với Python
+ *               image:
+ *                 type: string
+ *                 example: /images/demo/test1.jpg
  *               tags:
  *                 type: array
  *                 items:
  *                   type: string
  *                 example: ["python", "basic", "coding"]
+ *               credits:
+ *                 type: number
+ *                 example: 3
+ *               instructor:
+ *                 type: string
+ *                 example: "Nguyễn Văn A"
+ *               schedule:
+ *                 type: string
+ *                 example: "Mon, Wed 07:00 - 09:00"
+ *               room:
+ *                 type: string
+ *                 example: "B101"
+ *               capacity:
+ *                 type: number
+ *                 example: 60
+ *               syllabus:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                 example: [{ title: 'Intro', description: 'Overview' }]
  *     responses:
  *       201:
  *         description: Tạo môn học thành công
@@ -286,11 +314,39 @@ courseRoutes.get(
  *               description:
  *                 type: string
  *                 example: Nội dung cập nhật cho khóa học
+ *               image:
+ *                 type: string
+ *                 example: /images/demo/test1.jpg
  *               tags:
  *                 type: array
  *                 items:
  *                   type: string
  *                 example: ["python", "advanced"]
+ *               credits:
+ *                 type: number
+ *                 example: 3
+ *               instructor:
+ *                 type: string
+ *                 example: "Nguyễn Văn A"
+ *               schedule:
+ *                 type: string
+ *                 example: "Mon, Wed 07:00 - 09:00"
+ *               room:
+ *                 type: string
+ *                 example: "B101"
+ *               capacity:
+ *                 type: number
+ *                 example: 60
+ *               syllabus:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                 example: [{ title: 'Intro', description: 'Overview' }]
  *     responses:
  *       200:
  *         description: Cập nhật môn học thành công
@@ -361,5 +417,38 @@ courseRoutes.delete(
   isTeacherOrAdmin,
   (req, res) => courseController.delete(req, res)
 );
+
+// Public endpoint: get public course detail without requiring authentication
+// GET /api/courses/public/:id
+/**
+ * @swagger
+ * /api/courses/public/{id}:
+ *   get:
+ *     summary: Lấy chi tiết khóa học công khai
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của khóa học
+ *     responses:
+ *       200:
+ *         description: Thông tin khóa học công khai
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Course'
+ *       404:
+ *         description: Không tìm thấy khóa học
+ */
+courseRoutes.get('/public/:id', (req, res) => courseController.getPublicDetail(req, res));
 
 export default courseRoutes;

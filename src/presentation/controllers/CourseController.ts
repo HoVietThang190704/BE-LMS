@@ -4,6 +4,8 @@ import { GetCoursesUseCase } from '../../domain/usecases/course/GetCourses.useca
 import { DeleteCourseUseCase } from '../../domain/usecases/course/DeleteCourse.usecase';
 import { GetCourseByIdUseCase } from '../../domain/usecases/course/GetCourseById.usecase';
 import { UpdateCourseUseCase } from '../../domain/usecases/course/UpdateCourse.usecase';
+import { GetPublicCoursesUseCase } from '../../domain/usecases/course/GetPublicCourses.usecase';
+import { GetPublicCourseByIdUseCase } from '../../domain/usecases/course/GetPublicCourseById.usecase';
 import { logger } from '../../shared/utils/logger';
 import { HTTP_STATUS } from '../../shared/constants/httpStatus';
 import { 
@@ -24,7 +26,8 @@ export class CourseController {
     private deleteCourseUseCase: DeleteCourseUseCase,
     private getCourseByIdUseCase: GetCourseByIdUseCase,
     private updateCourseUseCase: UpdateCourseUseCase,
-    private getPublicCoursesUseCase?: any
+    private getPublicCoursesUseCase: GetPublicCoursesUseCase,
+    private getPublicCourseByIdUseCase: GetPublicCourseByIdUseCase
   ) {}
 
   /**
@@ -36,7 +39,7 @@ export class CourseController {
       // 1. Lấy userId từ token (thông qua hàm helper requireAuth)
       const { userId } = requireAuth(req);
       
-      const { code, name, description, tags, image } = req.body;
+      const { code, name, description, tags, image, credits, instructor, schedule, room, capacity, syllabus } = req.body;
 
       // 2. Gọi Use Case
       const newCourse = await this.createCourseUseCase.execute({
@@ -45,6 +48,12 @@ export class CourseController {
         description,
         image,
         tags,
+        credits,
+        instructor,
+        schedule,
+        room,
+        capacity,
+        syllabus,
         ownerId: userId
       });
 
@@ -188,14 +197,6 @@ export class CourseController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      if (!this.getPublicCoursesUseCase) {
-        // Nếu usecase không được inject (fallback)
-        const { GetPublicCoursesUseCase } = require('../../domain/usecases/course/GetPublicCourses.usecase');
-        const { courseRepository } = require('../../di/container');
-        // @ts-ignore
-        this.getPublicCoursesUseCase = new GetPublicCoursesUseCase(courseRepository);
-      }
-
       const { data, total } = await this.getPublicCoursesUseCase.execute(keyword, page, limit);
 
       sendSuccess(res, {
@@ -205,6 +206,29 @@ export class CourseController {
       });
     } catch (error: any) {
       handleControllerError(res, error, 'Lỗi server khi lấy danh sách công khai');
+    }
+  }
+
+  /**
+   * GET /api/courses/public/:id
+   * Lấy chi tiết khóa học công khai
+   */
+  async getPublicDetail(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const course = await this.getPublicCourseByIdUseCase.execute(id);
+
+      sendSuccess(res, {
+        message: 'Lấy thông tin khóa học thành công',
+        data: course
+      });
+    } catch (error: any) {
+      if (error.message === 'Course not found') {
+        sendFailure(res, { status: HTTP_STATUS.NOT_FOUND, message: 'Không tìm thấy khóa học' });
+        return;
+      }
+      handleControllerError(res, error, 'Lỗi server khi lấy chi tiết khóa học');
     }
   }
 
