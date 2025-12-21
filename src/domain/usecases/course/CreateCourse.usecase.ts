@@ -22,7 +22,14 @@ export class CreateCourseUseCase {
       input.description,
       input.image,
       input.tags,
-      'active', // <--- UseCase tự set cứng giá trị mặc định tại đây
+      'active', // status
+      input.credits,
+      input.instructor,
+      input.schedule,
+      input.room,
+      input.enrolled,
+      input.capacity,
+      input.syllabus,
       undefined, // createdAt
       undefined  // updatedAt
     );

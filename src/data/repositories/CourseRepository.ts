@@ -62,9 +62,15 @@ export class CourseRepository implements ICourseRepository {
 
   // 3. Tìm môn học theo ID
   async findById(id: string): Promise<ICourse | null> {
-    const course = await CourseModel.findById(id).lean();
+    // populate owner basic info for public details
+    const course = await CourseModel.findById(id).populate('ownerId', 'fullName email').lean();
     if (!course) return null;
     
+    // If owner populated, ensure instructor field is set
+    if (course.ownerId && !course.instructor) {
+      course.instructor = course.ownerId.fullName || course.ownerId.email || course.instructor;
+    }
+
     // Sửa lỗi: Convert
     return this.mapToEntity(course);
   }
@@ -92,7 +98,14 @@ export class CourseRepository implements ICourseRepository {
       ...doc,
       // Ép kiểu ObjectId về string thủ công để khớp với Interface ICourse
       _id: doc._id?.toString(),
-      ownerId: doc.ownerId?.toString(),
+      ownerId: doc.ownerId?._id?.toString ? doc.ownerId._id.toString() : (doc.ownerId?.toString ? doc.ownerId.toString() : doc.ownerId),
+      credits: doc.credits,
+      instructor: doc.instructor,
+      schedule: doc.schedule,
+      room: doc.room,
+      enrolled: doc.enrolled,
+      capacity: doc.capacity,
+      syllabus: doc.syllabus,
       // Đảm bảo date đúng định dạng
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt
