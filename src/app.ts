@@ -22,7 +22,7 @@ import { HTTP_STATUS } from './shared/constants/httpStatus';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { courseRoutes } from './routes/courses';
-import publicCourseRouter from './routes/course/router';
+// import publicCourseRouter from './routes/course/router';
 import homeRoutes from './routes/home';
 
 const app = express();

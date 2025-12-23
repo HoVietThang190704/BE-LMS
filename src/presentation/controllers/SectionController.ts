@@ -62,6 +62,29 @@ export class SectionController {
 
   static async update(req: Request, res: Response) {
     try {
+      // Validate status nếu có
+      const allowedStatuses = ['planned', 'ongoing', 'completed', 'cancelled'];
+      if (
+        Object.prototype.hasOwnProperty.call(req.body, 'status') &&
+        !allowedStatuses.includes(req.body.status)
+      ) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+      // Validate schedule.dayOfWeek nếu có
+      if (Array.isArray(req.body.schedule)) {
+        for (const item of req.body.schedule) {
+          let isValid = false;
+          if (typeof item.dayOfWeek === 'number') {
+            if (item.dayOfWeek >= 2 && item.dayOfWeek <= 7) isValid = true;
+          } else if (typeof item.dayOfWeek === 'string') {
+            const val = item.dayOfWeek.trim().toLowerCase().normalize('NFC');
+            if (val === 'cn' || val === 'chủ nhật' || val === 'chu nhat') isValid = true;
+          }
+          if (!isValid) {
+            return res.status(400).json({ message: 'Invalid dayOfWeek' });
+          }
+        }
+      }
       const usecase = new UpdateSectionUsecase(sectionRepo);
       const section = await usecase.execute(req.params.id, req.body);
       if (!section) return res.status(404).json({ message: 'Section not found' });
