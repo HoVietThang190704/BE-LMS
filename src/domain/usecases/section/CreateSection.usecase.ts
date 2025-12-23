@@ -13,9 +13,9 @@ export class CreateSectionUsecase {
     if (typeof data.maxStudents !== 'number' || data.maxStudents <= 0) {
       throw new Error('max student must be more than 0');
     }
-    const validTerms = ['2023-2024', '2024-2025', '2025-2026'];
-    if (!data.term || !validTerms.includes(data.term)) {
-      throw new Error('Term must be 2023-2024,2024-2025,2025-2026');
+    const termRegex = /^\d{4}-\d{4}$/;
+    if (!data.term || !termRegex.test(data.term)) {
+      throw new Error('Term must be in format YYYY-YYYY');
     }
     // Set teacherId, status
     data.teacherId = teacherId as any;
