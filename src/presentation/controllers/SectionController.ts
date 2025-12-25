@@ -12,7 +12,6 @@ const sectionRepo = new SectionRepository();
 export class SectionController {
   static async create(req: Request, res: Response) {
     try {
-      // Giả định middleware auth gán req.user: { userId: string; email: string; role: string }
       if (!req.user || !('userId' in req.user)) {
         return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: 'Unauthorized: missing user info' });
       }
@@ -63,7 +62,7 @@ export class SectionController {
 
   static async update(req: Request, res: Response) {
     try {
-      // Validate status nếu có
+      
       const allowedStatuses = ['planned', 'ongoing', 'completed', 'cancelled'];
       if (
         Object.prototype.hasOwnProperty.call(req.body, 'status') &&
