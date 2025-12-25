@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { HTTP_STATUS } from '../../shared/constants/httpStatus';
 import { CreateSectionUsecase } from '../../domain/usecases/section/CreateSection.usecase';
 import { GetSectionsUsecase } from '../../domain/usecases/section/GetSections.usecase';
 import { GetSectionByIdUsecase } from '../../domain/usecases/section/GetSectionById.usecase';
@@ -11,9 +12,8 @@ const sectionRepo = new SectionRepository();
 export class SectionController {
   static async create(req: Request, res: Response) {
     try {
-      // Giả định middleware auth gán req.user: { userId: string; email: string; role: string }
       if (!req.user || !('userId' in req.user)) {
-        return res.status(401).json({ message: 'Unauthorized: missing user info' });
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: 'Unauthorized: missing user info' });
       }
       const teacherId = (req.user as { userId: string }).userId;
       // Cho phép truyền courseCode thay vì courseId
@@ -23,15 +23,15 @@ export class SectionController {
         const CourseModel = require('../../models/courses/Course').default;
         const course = await CourseModel.findOne({ code: body.courseCode });
         if (!course) {
-          return res.status(400).json({ message: 'Course code không tồn tại' });
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Course code không tồn tại' });
         }
         body.courseId = course._id;
       }
       const usecase = new CreateSectionUsecase(sectionRepo);
       const section = await usecase.execute(body, teacherId);
-      return res.status(201).json(section);
+      return res.status(HTTP_STATUS.CREATED).json(section);
     } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: err.message });
     }
   }
 
@@ -45,7 +45,7 @@ export class SectionController {
       const sections = await usecase.execute(filter);
       return res.json(sections);
     } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: err.message });
     }
   }
 
@@ -53,21 +53,35 @@ export class SectionController {
     try {
       const usecase = new GetSectionByIdUsecase(sectionRepo);
       const section = await usecase.execute(req.params.id);
-      if (!section) return res.status(404).json({ message: 'Section not found' });
+      if (!section) return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Section not found' });
       return res.json(section);
     } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: err.message });
     }
   }
 
   static async update(req: Request, res: Response) {
     try {
+      
+      const allowedStatuses = ['planned', 'ongoing', 'completed', 'cancelled'];
+      if (
+        Object.prototype.hasOwnProperty.call(req.body, 'status') &&
+        !allowedStatuses.includes(req.body.status)
+      ) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Invalid status' });
+      }
+      // Validate schedule.dayOfWeek nếu có
+      const { validateScheduleDayOfWeek } = require('../../shared/validation/schedule.validation');
+      const scheduleErr = validateScheduleDayOfWeek(req.body.schedule);
+      if (scheduleErr) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: scheduleErr });
+      }
       const usecase = new UpdateSectionUsecase(sectionRepo);
       const section = await usecase.execute(req.params.id, req.body);
-      if (!section) return res.status(404).json({ message: 'Section not found' });
+      if (!section) return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Section not found' });
       return res.json(section);
     } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: err.message });
     }
   }
 
@@ -77,7 +91,7 @@ export class SectionController {
       await usecase.execute(req.params.id);
       return res.json({ success: true });
     } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: err.message });
     }
   }
 }
