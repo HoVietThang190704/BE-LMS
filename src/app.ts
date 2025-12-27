@@ -32,10 +32,19 @@ app.use(helmet());
 // CORS: use a dynamic origin allowlist driven by environment variable
 // If ALLOWED_ORIGINS is empty, default to allowing same-origin and server-to-server calls.
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+// Log allowlist for debugging (non-sensitive)
+if (config.NODE_ENV !== 'production') {
+  logger.info(`CORS allowlist: ${allowedOrigins.length ? allowedOrigins.join(',') : '(empty)'} - localhost origins will be allowed in dev`);
+}
 const corsOptions = {
   origin: (origin: any, callback: any) => {
     // No origin means server-to-server or curl/postman — allow it
     if (!origin) return callback(null, true);
+
+    // Allow localhost-based origins automatically in non-production to ease local development
+    if (config.NODE_ENV !== 'production' && typeof origin === 'string' && origin.includes('localhost')) {
+      return callback(null, true);
+    }
 
     // If no explicit allowed origins configured, allow the requesting origin
     if (allowedOrigins.length === 0) return callback(null, true);
