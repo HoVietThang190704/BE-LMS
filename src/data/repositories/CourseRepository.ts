@@ -90,6 +90,16 @@ export class CourseRepository implements ICourseRepository {
     return this.mapToEntity(updatedCourse);
   }
 
+  async incrementEnrolledCount(id: string, delta: number): Promise<ICourse | null> {
+    const updatedCourse = await CourseModel.findByIdAndUpdate(
+      id,
+      { $inc: { enrolled: delta } },
+      { new: true }
+    ).lean();
+
+    return updatedCourse ? this.mapToEntity(updatedCourse) : null;
+  }
+
   // ==========================================
   // HÀM PHỤ (HELPER) ĐỂ SỬA LỖI TYPE
   // ==========================================
@@ -106,6 +116,7 @@ export class CourseRepository implements ICourseRepository {
       enrolled: doc.enrolled,
       capacity: doc.capacity,
       syllabus: doc.syllabus,
+      isEnrolled: doc.isEnrolled,
       // Đảm bảo date đúng định dạng
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt

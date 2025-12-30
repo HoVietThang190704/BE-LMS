@@ -8,7 +8,6 @@ export interface ICourseRepository {
   findById(id: string): Promise<Course | null>;
   update(id: string, course: Partial<Course>): Promise<Course | null>;
   delete(id: string): Promise<boolean>;
+  incrementEnrolledCount(id: string, delta: number): Promise<Course | null>;
   
-  // Hàm kiểm tra logic nghiệp vụ:
-  // checkOwner(courseId: string, ownerId: string): Promise<boolean>;
 }

@@ -6,6 +6,7 @@ import { GetCourseByIdUseCase } from '../../domain/usecases/course/GetCourseById
 import { UpdateCourseUseCase } from '../../domain/usecases/course/UpdateCourse.usecase';
 import { GetPublicCoursesUseCase } from '../../domain/usecases/course/GetPublicCourses.usecase';
 import { GetPublicCourseByIdUseCase } from '../../domain/usecases/course/GetPublicCourseById.usecase';
+import { GetEnrolledCourseIdsUseCase } from '../../domain/usecases/enrollment/GetEnrolledCourseIds.usecase';
 import { logger } from '../../shared/utils/logger';
 import { HTTP_STATUS } from '../../shared/constants/httpStatus';
 import { 
@@ -14,6 +15,7 @@ import {
   sendFailure, 
   sendSuccess 
 } from '../../shared/utils/controllerUtils';
+import { resolveUserId } from '../../shared/utils/userContext';
 
 /**
  * Course Controller
@@ -27,7 +29,8 @@ export class CourseController {
     private getCourseByIdUseCase: GetCourseByIdUseCase,
     private updateCourseUseCase: UpdateCourseUseCase,
     private getPublicCoursesUseCase: GetPublicCoursesUseCase,
-    private getPublicCourseByIdUseCase: GetPublicCourseByIdUseCase
+    private getPublicCourseByIdUseCase: GetPublicCourseByIdUseCase,
+    private getEnrolledCourseIdsUseCase: GetEnrolledCourseIdsUseCase
   ) {}
 
   /**
@@ -199,9 +202,18 @@ export class CourseController {
 
       const { data, total } = await this.getPublicCoursesUseCase.execute(keyword, page, limit);
 
+      const userId = await resolveUserId(req);
+      const enrolledIds = userId ? new Set(await this.getEnrolledCourseIdsUseCase.execute(userId)) : new Set<string>();
+      const enriched = data.map((course) => {
+        const courseId = course._id || course.code;
+        const isEnrolled = enrolledIds.has(String(courseId));
+        const tags = Array.from(new Set([...(course.tags || []), ...(isEnrolled ? ['enrolled'] : [])]));
+        return { ...course, isEnrolled, tags };
+      });
+
       sendSuccess(res, {
         message: 'Lấy danh sách khóa học công khai thành công',
-        data,
+        data: enriched,
         meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
       });
     } catch (error: any) {
@@ -218,10 +230,15 @@ export class CourseController {
       const { id } = req.params;
 
       const course = await this.getPublicCourseByIdUseCase.execute(id);
+      const userId = await resolveUserId(req);
+      const enrolledIds = userId ? new Set(await this.getEnrolledCourseIdsUseCase.execute(userId)) : new Set<string>();
+      const courseId = course._id || course.code;
+      const isEnrolled = enrolledIds.has(String(courseId));
+      const tags = Array.from(new Set([...(course.tags || []), ...(isEnrolled ? ['enrolled'] : [])]));
 
       sendSuccess(res, {
         message: 'Lấy thông tin khóa học thành công',
-        data: course
+        data: { ...course, isEnrolled, tags }
       });
     } catch (error: any) {
       if (error.message === 'Course not found') {
