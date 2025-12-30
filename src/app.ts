@@ -24,6 +24,7 @@ import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { courseRoutes } from './routes/courses';
 import homeRoutes from './routes/home';
+import exercisesRoutes from './routes/exercises';
 
 const app = express();
 
@@ -120,6 +121,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/home', homeRoutes);
+app.use('/api/exercises', exercisesRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
 
@@ -273,8 +275,15 @@ async function startServer() {
     });
 
     // Connect to MongoDB in background (non-blocking)
-    database.connect().then(() => {
+    database.connect().then(async () => {
       logger.info('✅ MongoDB connected successfully');
+      // Seed sample exercise data if DB empty
+      try {
+        const { seedExercisesIfNeeded } = await import('./services/exercises/seedService');
+        await seedExercisesIfNeeded();
+      } catch (err) {
+        logger.warn('🟡 Exercise seeding skipped or failed', err);
+      }
     }).catch((error) => {
       logger.error('❌ MongoDB connection failed:', error);
       logger.warn('⚠️  Server is running but database features will not work');
