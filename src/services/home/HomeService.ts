@@ -5,6 +5,8 @@ import { User } from '../../models/users/User';
 import { CourseRepository } from '../../data/repositories/CourseRepository';
 import { GetPublicCoursesUseCase } from '../../domain/usecases/course/GetPublicCourses.usecase';
 import { ICourse } from '../../domain/entities/Course.entity';
+import { EnrollmentRepository } from '../../data/repositories/EnrollmentRepository';
+import { GetEnrollmentsByUserUseCase } from '../../domain/usecases/enrollment/GetEnrollmentsByUser.usecase';
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DEFAULT_CLASS_LIMIT = 4;
@@ -14,6 +16,8 @@ const DEFAULT_PUBLIC_COURSE_LIMIT = 6;
 
 const courseRepository = new CourseRepository();
 const getPublicCoursesUseCase = new GetPublicCoursesUseCase(courseRepository);
+const enrollmentRepository = new EnrollmentRepository();
+const getEnrollmentsByUserUseCase = new GetEnrollmentsByUserUseCase(enrollmentRepository);
 
 const PROGRESS_BY_STATUS: Record<string, number> = {
   planned: 15,
@@ -103,6 +107,7 @@ export type HomeCourseSummary = {
   credits: number;
   enrolled: number;
   capacity: number;
+  isEnrolled?: boolean;
 };
 
 export type HomeDashboardPayload = {
@@ -154,14 +159,36 @@ export class HomeService {
     };
   }
 
-  private mapCourse(course: ICourse): HomeCourseSummary {
+  private deriveProgressFromCourse(course: Partial<ICourse>): number {
+    const seed = (course.name || course.code || '').length;
+    const base = (seed * 7) % 100;
+    return Math.min(90, Math.max(25, base));
+  }
+
+  private mapEnrolledCourseToClass(course: ICourse): HomeClassSummary {
+    const progress = this.deriveProgressFromCourse(course);
+    const totalLessons = 30;
+    const learnedLessons = Math.max(1, Math.round((progress / 100) * totalLessons));
+    return {
+      id: String(course._id || course.code || course.name),
+      courseCode: course.code,
+      courseName: course.name,
+      instructor: course.instructor || '',
+      progress,
+      schedule: course.schedule || '',
+      room: course.room || '',
+      lessonProgress: `${learnedLessons}/${totalLessons}`,
+    };
+  }
+
+  private mapCourse(course: ICourse, isEnrolled = false): HomeCourseSummary {
     const id = course._id?.toString() || course.code || '';
     return {
       id: String(id),
       code: course.code,
       name: course.name,
       description: course.description,
-      tags: course.tags,
+      tags: isEnrolled ? Array.from(new Set([...(course.tags || []), ''])) : course.tags,
       status: course.status,
       image: course.image,
       instructor: course.instructor || 'TBD',
@@ -170,11 +197,12 @@ export class HomeService {
       credits: course.credits ?? 3,
       enrolled: course.enrolled ?? 0,
       capacity: course.capacity ?? 60,
+      isEnrolled,
     };
   }
 
-  async getDashboard(): Promise<HomeDashboardPayload> {
-    const [sections, totalSections, completedSections, tickets, pendingAssignments, notifications, userRecord] = await Promise.all([
+  async getDashboard(userId?: string | null): Promise<HomeDashboardPayload> {
+    const [sections, totalSections, completedSections, tickets, pendingAssignments, notifications, userRecord, enrollments] = await Promise.all([
       SectionModel.find()
         .sort({ startDate: -1 })
         .limit(6)
@@ -193,28 +221,51 @@ export class HomeService {
         .limit(DEFAULT_NOTIFICATION_LIMIT)
         .lean(),
       User.findOne().sort({ createdAt: 1 }).lean(),
+      userId ? getEnrollmentsByUserUseCase.execute(userId) : [],
     ]);
 
     const sectionDocs = (sections as unknown as Array<ISection & { courseId?: any; teacherId?: any }>) ?? [];
     const ticketDocs = Array.isArray(tickets) ? (tickets as unknown as ITicket[]) : [];
     const notificationDocs = Array.isArray(notifications) ? (notifications as unknown as INotification[]) : [];
 
-    const classes = sectionDocs.slice(0, DEFAULT_CLASS_LIMIT).map((section) => this.mapSection(section));
+    const enrolledCourseIds = new Set(
+      (enrollments as any[]).map((item) => {
+        const course = (item as any).course || {};
+        return course._id?.toString?.() || course.id || (item as any).courseId;
+      }).filter(Boolean)
+    );
+
+    const enrolledClasses = (enrollments as any[]) 
+      .map((item) => (item as any).course)
+      .filter(Boolean)
+      .map((course: ICourse) => this.mapEnrolledCourseToClass(course));
+
+    const classes = enrolledClasses.length > 0
+      ? enrolledClasses
+      : sectionDocs.slice(0, DEFAULT_CLASS_LIMIT).map((section) => this.mapSection(section));
+
     const assignmentSummaries = ticketDocs.map((ticket) => this.mapTicket(ticket));
     const notificationSummaries = notificationDocs.map((notification) => this.mapNotification(notification));
 
     const { data: courseDocs } = await getPublicCoursesUseCase.execute(undefined, 1, DEFAULT_PUBLIC_COURSE_LIMIT);
-    const publicCourses = (courseDocs || []).map((course) => this.mapCourse(course));
+    const publicCourses = (courseDocs || []).map((course) => {
+      const courseId = course._id || course.code;
+      const isEnrolled = enrolledCourseIds.has(String(courseId));
+      return this.mapCourse(course, isEnrolled);
+    });
 
-    const learningProgress = totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0;
-    const averageGradeValue = totalSections > 0 ? Math.min(100, Math.max(60, 60 + Math.round((learningProgress / 100) * 40))) : 0;
+    const learningProgress = classes.length > 0
+      ? Math.round(classes.reduce((sum, c) => sum + (c.progress || 0), 0) / classes.length)
+      : totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0;
+
+    const averageGradeValue = learningProgress > 0 ? Math.min(100, Math.max(60, 60 + Math.round((learningProgress / 100) * 40))) : 0;
 
     return {
       user: {
         name: userRecord?.fullName || userRecord?.email || 'Học viên'
       },
       stats: {
-        enrolledCourses: totalSections,
+        enrolledCourses: enrolledCourseIds.size || totalSections,
         pendingAssignments: Number(pendingAssignments ?? 0),
         averageGrade: String(averageGradeValue),
         learningProgress,

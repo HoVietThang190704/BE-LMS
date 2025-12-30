@@ -8,6 +8,7 @@ import { UserRepository } from '../data/repositories/UserRepository';
 import { TicketRepository } from '../data/repositories/TicketRepository';
 import { TicketCommentRepository } from '../data/repositories/TicketCommentRepository';
 import { CourseRepository } from '../data/repositories/CourseRepository';
+import { EnrollmentRepository } from '../data/repositories/EnrollmentRepository';
 
 // ==================== USE CASES ====================
 // User Use Cases
@@ -32,6 +33,9 @@ import { GetCourseByIdUseCase } from '../domain/usecases/course/GetCourseById.us
 import { UpdateCourseUseCase } from '../domain/usecases/course/UpdateCourse.usecase';
 import { GetPublicCoursesUseCase } from '../domain/usecases/course/GetPublicCourses.usecase';
 import { GetPublicCourseByIdUseCase } from '../domain/usecases/course/GetPublicCourseById.usecase';
+import { EnrollCourseUseCase } from '../domain/usecases/enrollment/EnrollCourse.usecase';
+import { GetEnrollmentsByUserUseCase } from '../domain/usecases/enrollment/GetEnrollmentsByUser.usecase';
+import { GetEnrolledCourseIdsUseCase } from '../domain/usecases/enrollment/GetEnrolledCourseIds.usecase';
 
 // ==================== CONTROLLERS ====================
 import { UserController } from '../presentation/controllers/UserController';
@@ -41,12 +45,14 @@ import { GetUsersByIdsUseCase } from '../domain/usecases/user/GetUsersByIds.usec
 import { GetUsersUseCase } from '../domain/usecases/user/GetUsers.usecase';
 import { AdminUserController } from '../presentation/controllers/AdminUserController';
 import { CourseController } from '../presentation/controllers/CourseController';
+import { EnrollmentController } from '../presentation/controllers/EnrollmentController';
 
 // ==================== REPOSITORY INSTANCES ====================
 const userRepository = new UserRepository();
 const ticketRepository = new TicketRepository();
 const ticketCommentRepository = new TicketCommentRepository();
 const courseRepository = new CourseRepository();
+const enrollmentRepository = new EnrollmentRepository();
 
 // ==================== USE CASE INSTANCES ====================
 // User Use Cases
@@ -72,6 +78,9 @@ const getCourseByIdUseCase = new GetCourseByIdUseCase(courseRepository);
 const updateCourseUseCase = new UpdateCourseUseCase(courseRepository);
 const getPublicCoursesUseCase = new GetPublicCoursesUseCase(courseRepository);
 const getPublicCourseByIdUseCase = new GetPublicCourseByIdUseCase(courseRepository);
+const enrollCourseUseCase = new EnrollCourseUseCase(enrollmentRepository, courseRepository);
+const getEnrollmentsByUserUseCase = new GetEnrollmentsByUserUseCase(enrollmentRepository);
+const getEnrolledCourseIdsUseCase = new GetEnrolledCourseIdsUseCase(enrollmentRepository);
 
 // ==================== CONTROLLER INSTANCES ====================
 export const userController = new UserController(
@@ -106,7 +115,13 @@ export const courseController = new CourseController(
   getCourseByIdUseCase,
   updateCourseUseCase,
   getPublicCoursesUseCase,
-  getPublicCourseByIdUseCase
+  getPublicCourseByIdUseCase,
+  getEnrolledCourseIdsUseCase
+);
+
+export const enrollmentController = new EnrollmentController(
+  enrollCourseUseCase,
+  getEnrollmentsByUserUseCase
 );
 
 // ==================== EXPORTS FOR REUSE ====================

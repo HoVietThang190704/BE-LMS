@@ -15,6 +15,7 @@ import { SocketService } from './services/socket/SocketService';
 import { setIO } from './services/socket/socketManager';
 import notificationRoutes from './routes/notifications';
 import sectionRoutes from './routes/sections';
+import enrollmentRoutes from './routes/enrollments';
 import { initFirebaseAdmin } from './lib/firebaseAdmin';
 import { HTTP_STATUS } from './shared/constants/httpStatus';
 
@@ -117,6 +118,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/sections', sectionRoutes);
+app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/home', homeRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
