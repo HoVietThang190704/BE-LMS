@@ -7,6 +7,9 @@ import { DeleteUserUseCase } from '../../domain/usecases/user/DeleteUser.usecase
 import { UserMapper } from '../dto/user/User.dto';
 import { sendSuccess, handleControllerError, sendFailure } from '../../shared/utils/controllerUtils';
 import { HTTP_STATUS } from '../../shared/constants/httpStatus';
+import type { UserEntity } from '../../domain/entities/User.entity';
+
+type UserRole = UserEntity['role'];
 
 export class AdminUserController {
   constructor(
@@ -16,6 +19,17 @@ export class AdminUserController {
     private readonly updateUserRoleUseCase: UpdateUserRoleUseCase,
     private readonly deleteUserUseCase: DeleteUserUseCase
   ) {}
+
+  private buildActorContext(req: Request): { id: string; role: UserRole } | undefined {
+    if (!req.user) {
+      return undefined;
+    }
+
+    return {
+      id: req.user.userId,
+      role: req.user.role as UserRole
+    };
+  }
 
   async listUsers(req: Request, res: Response): Promise<void> {
     try {
@@ -131,7 +145,8 @@ export class AdminUserController {
 
       const updatedUser = await this.updateUserRoleUseCase.execute({
         userId,
-        role
+        role,
+        actor: this.buildActorContext(req)
       });
 
       sendSuccess(res, {
@@ -154,7 +169,10 @@ export class AdminUserController {
   async deleteUser(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.params.id;
-      await this.deleteUserUseCase.execute(userId);
+      await this.deleteUserUseCase.execute({
+        userId,
+        actor: this.buildActorContext(req)
+      });
 
       sendSuccess(res, {
         message: 'Xóa người dùng thành công'
