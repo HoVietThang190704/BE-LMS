@@ -15,6 +15,7 @@ export class UserRepository implements IUserRepository {
       profile: user.profile,
       isActive: user.isActive,
       isVerified: user.isVerified,
+      isBlocked: user.isBlocked ?? false,
       lastLoginAt: user.lastLoginAt,
       googleId: user.googleId,
       facebookId: user.facebookId
@@ -78,6 +79,7 @@ export class UserRepository implements IUserRepository {
     }
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.isVerified !== undefined) updateData.isVerified = data.isVerified;
+    if (data.isBlocked !== undefined) updateData.isBlocked = data.isBlocked;
     if (data.role !== undefined) updateData.role = data.role;
     if (data.lastLoginAt !== undefined) updateData.lastLoginAt = data.lastLoginAt;
     if (data.googleId !== undefined) updateData.googleId = data.googleId;
@@ -241,6 +243,7 @@ export class UserRepository implements IUserRepository {
       model.role,
       model.isActive,
       model.isVerified,
+      model.isBlocked,
       model._id.toString(),
       model.fullName,
       model.profile,

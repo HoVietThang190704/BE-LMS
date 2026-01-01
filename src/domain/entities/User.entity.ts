@@ -24,6 +24,7 @@ export interface IUserEntity {
   profile?: UserProfileEntity;
   isActive: boolean;
   isVerified?: boolean;
+  isBlocked?: boolean;
   lastLoginAt?: Date;
   googleId?: string;
   facebookId?: string;
@@ -38,6 +39,7 @@ export class UserEntity implements IUserEntity {
     public role: 'admin' | 'teacher' | 'student' = 'student',
     public isActive: boolean = true,
     public isVerified: boolean = false,
+    public isBlocked: boolean = false,
     public id?: string,
     public fullName?: string,
     public profile?: UserProfileEntity,
