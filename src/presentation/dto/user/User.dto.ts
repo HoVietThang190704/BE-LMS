@@ -22,6 +22,7 @@ export interface UserResponseDto {
   googleId?: string;
   role: 'admin' | 'teacher' | 'student';
   isActive: boolean;
+  isBlocked: boolean;
   lastLoginAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -44,6 +45,7 @@ export class UserMapper {
       googleId: user.googleId,
       role: user.role,
       isActive: user.isActive,
+      isBlocked: Boolean(user.isBlocked),
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt

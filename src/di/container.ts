@@ -17,6 +17,10 @@ import { UpdateUserProfileUseCase } from '../domain/usecases/user/UpdateUserProf
 import { ResetPasswordUseCase } from '../domain/usecases/user/ResetPassword.usecase';
 import { ChangePasswordUseCase } from '../domain/usecases/user/ChangePassword.usecase';
 import { UpdateUserAvatarUseCase } from '../domain/usecases/user/UpdateUserAvatar.usecase';
+import { UpdateUserBlockStatusUseCase } from '../domain/usecases/user/UpdateUserBlockStatus.usecase';
+import { CreateUserByAdminUseCase } from '../domain/usecases/user/CreateUserByAdmin.usecase';
+import { UpdateUserRoleUseCase } from '../domain/usecases/user/UpdateUserRole.usecase';
+import { DeleteUserUseCase } from '../domain/usecases/user/DeleteUser.usecase';
 
 // Ticket Use Cases
 import { CreateTicketUseCase } from '../domain/usecases/ticket/CreateTicket.usecase';
@@ -61,7 +65,11 @@ const updateUserProfileUseCase = new UpdateUserProfileUseCase(userRepository);
 const resetPasswordUseCase = new ResetPasswordUseCase(userRepository);
 const changePasswordUseCase = new ChangePasswordUseCase(userRepository);
 const updateUserAvatarUseCase = new UpdateUserAvatarUseCase(userRepository);
-const getUsersByIdsUseCase = new GetUsersByIdsUseCase(userRepository)
+const getUsersByIdsUseCase = new GetUsersByIdsUseCase(userRepository);
+const updateUserBlockStatusUseCase = new UpdateUserBlockStatusUseCase(userRepository);
+const createUserByAdminUseCase = new CreateUserByAdminUseCase(userRepository);
+const updateUserRoleUseCase = new UpdateUserRoleUseCase(userRepository);
+const deleteUserUseCase = new DeleteUserUseCase(userRepository);
 
 // Ticket use-cases
 const createTicketUseCase = new CreateTicketUseCase(ticketRepository);
@@ -93,7 +101,13 @@ export const userController = new UserController(
 
 // Admin user list use-case + controller
 const getUsersUseCase = new GetUsersUseCase(userRepository);
-export const adminUserController = new AdminUserController(getUsersUseCase);
+export const adminUserController = new AdminUserController(
+  getUsersUseCase,
+  updateUserBlockStatusUseCase,
+  createUserByAdminUseCase,
+  updateUserRoleUseCase,
+  deleteUserUseCase
+);
 
 export const addressController = new AddressController();
 
