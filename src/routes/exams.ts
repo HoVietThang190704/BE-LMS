@@ -108,6 +108,24 @@ router.get('/:id', (req, res) => ExamController.getById(req, res));
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               courseId:
+ *                 type: string
+ *                 example: 507f1f77bcf86cd799439011
+ *               title:
+ *                 type: string
+ *                 example: Chapter 1 Quiz Updated
+ *               order:
+ *                 type: number
+ *                 example: 2
+ *               description:
+ *                 type: string
+ *                 example: Multiple choice questions about Chapter 1 with new questions
+ *               correct_answer:
+ *                 oneOf:
+ *                   - type: string
+ *                   - type: number
+ *                 example: B
  *     responses:
  *       200:
  *         description: Exam updated successfully

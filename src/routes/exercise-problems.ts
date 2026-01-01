@@ -110,6 +110,36 @@ router.get('/:id', (req, res) => ExerciseProblemController.getById(req, res));
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               courseId:
+ *                 type: string
+ *                 example: 507f1f77bcf86cd799439011
+ *               title:
+ *                 type: string
+ *                 example: Binary Search Updated
+ *               order:
+ *                 type: number
+ *                 example: 2
+ *               description:
+ *                 type: string
+ *                 example: Implement binary search algorithm with optimization
+ *               temp_code:
+ *                 type: string
+ *                 example: def binary_search(arr, target)# Your optimized code here
+ *               testcase:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     input:
+ *                       type: string
+ *                       example: "[1, 2, 3, 4, 5], 3"
+ *                     expectedOutput:
+ *                       type: string
+ *                       example: "2"
+ *                     visible:
+ *                       type: boolean
+ *                       example: true
  *     responses:
  *       200:
  *         description: Exercise updated successfully
