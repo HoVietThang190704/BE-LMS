@@ -3,7 +3,7 @@ import { userController, addressController, adminUserController } from '../di/co
 import { authenticate } from '../shared/middleware/auth';
 import { isTeacherOrAdmin, isAdmin } from '../shared/middleware/authorize';
 import { validate } from '../shared/middleware/validate';
-import { updateProfileSchema } from '../shared/validation/user.schema';
+import { updateProfileSchema, updateUserBlockStatusSchema, createUserByAdminSchema, updateUserRoleSchema } from '../shared/validation/user.schema';
 import { UserMapper } from '../presentation/dto/user/User.dto';
 import { uploadAvatar } from '../shared/middleware/upload';
 import { HTTP_STATUS } from '../shared/constants/httpStatus';
@@ -385,3 +385,99 @@ userRoutes.patch('/me/addresses/:id/default', authenticate, (req, res) => {
  *         description: Danh sách người dùng trả về thành công
  */
 userRoutes.get('/', authenticate, isAdmin, (req, res) => adminUserController.listUsers(req, res));
+
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: Tạo người dùng mới (Admin)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *               fullName:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [admin, teacher, student]
+ *               phone:
+ *                 type: string
+ *               bio:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tạo người dùng thành công
+ */
+userRoutes.post(
+  '/',
+  authenticate,
+  isAdmin,
+  validate(createUserByAdminSchema),
+  (req, res) => adminUserController.createUser(req, res)
+);
+
+userRoutes.delete(
+  '/:id',
+  authenticate,
+  isAdmin,
+  (req, res) => adminUserController.deleteUser(req, res)
+);
+
+/**
+ * @swagger
+ * /api/users/{id}/block:
+ *   patch:
+ *     summary: Cập nhật trạng thái khóa người dùng (Admin)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID người dùng cần khóa/mở khóa
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isBlocked:
+ *                 type: boolean
+ *                 example: true
+ *                 description: true để khóa tài khoản, false để mở khóa
+ *     responses:
+ *       200:
+ *         description: Cập nhật trạng thái thành công
+ *       404:
+ *         description: Không tìm thấy người dùng
+ */
+userRoutes.patch(
+  '/:id/block',
+  authenticate,
+  isAdmin,
+  validate(updateUserBlockStatusSchema),
+  (req, res) => adminUserController.updateBlockStatus(req, res)
+);
+
+userRoutes.patch(
+  '/:id/role',
+  authenticate,
+  isAdmin,
+  validate(updateUserRoleSchema),
+  (req, res) => adminUserController.updateRole(req, res)
+);

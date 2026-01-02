@@ -25,6 +25,7 @@ export interface IUser extends Document {
   profile?: UserProfile;
   isActive: boolean;
   isVerified: boolean;
+  isBlocked: boolean;
   lastLoginAt?: Date;
   googleId?: string;
   facebookId?: string;
@@ -102,6 +103,10 @@ const UserSchema: Schema = new Schema({
     type: Boolean,
     default: false
   },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
   lastLoginAt: {
     type: Date
   },
@@ -125,6 +130,7 @@ const UserSchema: Schema = new Schema({
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1 });
 UserSchema.index({ isActive: 1 });
+UserSchema.index({ isBlocked: 1 });
 UserSchema.index({ createdAt: -1 });
 UserSchema.index({ 'profile.phone': 1 });
 

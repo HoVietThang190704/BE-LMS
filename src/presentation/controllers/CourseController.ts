@@ -16,6 +16,7 @@ import {
   sendSuccess 
 } from '../../shared/utils/controllerUtils';
 import { resolveUserId } from '../../shared/utils/userContext';
+import { CourseStatus } from '../../domain/repositories/ICourseRepository';
 
 /**
  * Course Controller
@@ -89,21 +90,24 @@ export class CourseController {
    */
   async getList(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = requireAuth(req);
-      const { keyword } = req.query;
+      const { userId, role } = requireAuth(req);
+      const keyword = typeof req.query.keyword === 'string' ? req.query.keyword : undefined;
+      const rawStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const status = rawStatus === 'active' || rawStatus === 'archived' ? (rawStatus as CourseStatus) : undefined;
 
       // 1. (+) Lấy page và limit (mặc định là trang 1, 10 dòng)
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
       // 2. (+) Gọi UseCase với đầy đủ tham số
-      // (Nhớ là bạn phải sửa UseCase trả về { data, total } ở bước trước rồi nhé)
-      const { data, total } = await this.getCoursesUseCase.execute(
-        userId, 
-        keyword as string,
+      const { data, total } = await this.getCoursesUseCase.execute({
+        ownerId: userId,
+        role,
+        keyword,
+        status,
         page,
         limit
-      );
+      });
 
       // 3. (+) Trả về dữ liệu kèm Meta cho Frontend dễ phân trang
       sendSuccess(res, {

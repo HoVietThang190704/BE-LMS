@@ -16,6 +16,7 @@ import { setIO } from './services/socket/socketManager';
 import notificationRoutes from './routes/notifications';
 import sectionRoutes from './routes/sections';
 import enrollmentRoutes from './routes/enrollments';
+import { uploadRoutes } from './routes/upload';
 import { initFirebaseAdmin } from './lib/firebaseAdmin';
 import { HTTP_STATUS } from './shared/constants/httpStatus';
 

@@ -1,5 +1,14 @@
 import { ICourse } from "../../entities/Course.entity";
-import { ICourseRepository } from "../../repositories/ICourseRepository";
+import { CourseStatus, ICourseRepository } from "../../repositories/ICourseRepository";
+
+type GetCoursesParams = {
+  ownerId: string;
+  role: string;
+  keyword?: string;
+  status?: CourseStatus;
+  page?: number;
+  limit?: number;
+};
 
 export class GetCoursesUseCase {
   constructor(private courseRepo: ICourseRepository) {}
@@ -7,11 +16,11 @@ export class GetCoursesUseCase {
   /**
    * Đã cập nhật thêm page và limit theo yêu cầu
    */
-  async execute(ownerId: string, keyword?: string, page: number = 1, limit: number = 10): Promise<{ data: ICourse[], total: number }> {
-    // Gọi xuống Repo (Repo này ở các bước trước mình đã hướng dẫn viết có page/limit rồi)
-    const result = await this.courseRepo.findAllByOwner(ownerId, keyword, page, limit);
-    
-    // Trả về cả data và total để Controller hiển thị phân trang
-    return result; 
+  async execute({ ownerId, role, keyword, status, page = 1, limit = 10 }: GetCoursesParams): Promise<{ data: ICourse[], total: number }> {
+    if (role === 'admin') {
+      return this.courseRepo.findAllForAdmin(keyword, status, page, limit);
+    }
+
+    return this.courseRepo.findAllByOwner(ownerId, keyword, status, page, limit);
   }
 }
