@@ -98,10 +98,21 @@ router.post('/images', authMiddleware, upload.array('images', 10), async (req: R
       return;
     }
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary (or local fallback)
     const uploadResults = await CloudinaryService.uploadMultipleImages(files, 'posts');
-    
-    const urls = uploadResults.map(result => result.url);
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const urls = uploadResults.map(result => {
+      if (!result.url) {
+        return '';
+      }
+
+      if (/^https?:\/\//i.test(result.url)) {
+        return result.url;
+      }
+
+      return `${baseUrl}${result.url.startsWith('/') ? result.url : `/${result.url}`}`;
+    });
     const publicIds = uploadResults.map(result => result.publicId);
 
     res.status(HTTP_STATUS.OK).json({

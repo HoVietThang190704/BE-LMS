@@ -1,8 +1,11 @@
 import { Course } from "../entities/Course.entity";
 
+export type CourseStatus = 'active' | 'archived';
+
 export interface ICourseRepository {
   create(course: Course): Promise<Course>;
-  findAllByOwner(ownerId: string, keyword?: string, page?: number, limit?: number): Promise<{ data: Course[]; total: number }>;
+  findAllByOwner(ownerId: string, keyword?: string, status?: CourseStatus, page?: number, limit?: number): Promise<{ data: Course[]; total: number }>;
+  findAllForAdmin(keyword?: string, status?: CourseStatus, page?: number, limit?: number): Promise<{ data: Course[]; total: number }>;
   // Lấy danh sách công khai (public) — không lọc theo owner
   findAll(keyword?: string, page?: number, limit?: number): Promise<{ data: Course[]; total: number }>;
   findById(id: string): Promise<Course | null>;

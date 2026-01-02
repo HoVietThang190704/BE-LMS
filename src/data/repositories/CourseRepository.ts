@@ -1,4 +1,4 @@
-import { ICourseRepository } from '../../domain/repositories/ICourseRepository';
+import { CourseStatus, ICourseRepository } from '../../domain/repositories/ICourseRepository';
 import CourseModel from '../../models/courses/Course';
 import { ICourse } from '../../domain/entities/Course.entity';
 
@@ -14,28 +14,66 @@ export class CourseRepository implements ICourseRepository {
   }
 
   // 2. Lấy danh sách môn học
-  async findAllByOwner(ownerId: string, keyword?: string, page = 1, limit = 10): Promise<{ data: ICourse[], total: number }> {
-  const query: any = { ownerId };
-  if (keyword) {
-    query.$or = [
-      { name: { $regex: keyword, $options: 'i' } },
-      { code: { $regex: keyword, $options: 'i' } }
-    ];
+  async findAllByOwner(
+    ownerId: string,
+    keyword?: string,
+    status?: CourseStatus,
+    page = 1,
+    limit = 10
+  ): Promise<{ data: ICourse[], total: number }> {
+    const query: Record<string, unknown> = { ownerId };
+    if (keyword) {
+      query.$or = [
+        { name: { $regex: keyword, $options: 'i' } },
+        { code: { $regex: keyword, $options: 'i' } }
+      ];
+    }
+    if (status) {
+      query.status = status;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [total, docs] = await Promise.all([
+      CourseModel.countDocuments(query),
+      CourseModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
+    ]);
+
+    return {
+      total,
+      data: docs.map(doc => this.mapToEntity(doc))
+    };
   }
 
-  const skip = (page - 1) * limit;
+  async findAllForAdmin(
+    keyword?: string,
+    status?: CourseStatus,
+    page = 1,
+    limit = 10
+  ): Promise<{ data: ICourse[]; total: number }> {
+    const query: Record<string, unknown> = {};
+    if (keyword) {
+      query.$or = [
+        { name: { $regex: keyword, $options: 'i' } },
+        { code: { $regex: keyword, $options: 'i' } }
+      ];
+    }
+    if (status) {
+      query.status = status;
+    }
 
-  // Chạy song song 2 lệnh: đếm tổng và lấy dữ liệu
-  const [total, docs] = await Promise.all([
-    CourseModel.countDocuments(query),
-    CourseModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
-  ]);
+    const skip = (page - 1) * limit;
 
-  return {
-    total,
-    data: docs.map(doc => this.mapToEntity(doc))
-  };
-}
+    const [total, docs] = await Promise.all([
+      CourseModel.countDocuments(query),
+      CourseModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean()
+    ]);
+
+    return {
+      total,
+      data: docs.map((doc) => this.mapToEntity(doc))
+    };
+  }
 
   // Public list (no owner filter)
   async findAll(keyword?: string, page = 1, limit = 10): Promise<{ data: ICourse[], total: number }> {
