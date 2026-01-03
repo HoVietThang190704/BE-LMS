@@ -27,6 +27,8 @@ import { userRoutes } from './routes/users';
 import { courseRoutes } from './routes/courses';
 import homeRoutes from './routes/home';
 import exercisesRoutes from './routes/exercises';
+import exerciseProblemsRoutes from './routes/exercise-problems';
+import examsRoutes from './routes/exams';
 
 const app = express();
 
@@ -124,6 +126,8 @@ app.use('/api/sections', sectionRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/exercises', exercisesRoutes);
+app.use('/api/exercise-problems', exerciseProblemsRoutes);
+app.use('/api/exams', examsRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/upload', uploadRoutes);
 // Small debug: print registered routes (non-production only)
