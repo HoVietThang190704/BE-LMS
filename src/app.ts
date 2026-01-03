@@ -29,6 +29,7 @@ import homeRoutes from './routes/home';
 import exercisesRoutes from './routes/exercises';
 import exerciseProblemsRoutes from './routes/exercise-problems';
 import examsRoutes from './routes/exams';
+import ticketRoutes from './routes/tickets';
 
 const app = express();
 
