@@ -13,6 +13,7 @@ const DEFAULT_CLASS_LIMIT = 4;
 const DEFAULT_ASSIGNMENT_LIMIT = 4;
 const DEFAULT_NOTIFICATION_LIMIT = 4;
 const DEFAULT_PUBLIC_COURSE_LIMIT = 6;
+const DEFAULT_MONITORING_LIMIT = 12;
 
 const courseRepository = new CourseRepository();
 const getPublicCoursesUseCase = new GetPublicCoursesUseCase(courseRepository);
@@ -119,6 +120,15 @@ export type HomeDashboardPayload = {
   courses: HomeCourseSummary[];
 };
 
+export type HomeClassListPayload = {
+  classes: HomeClassSummary[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+};
+
 export class HomeService {
   private mapSection(section: ISection & { courseId?: any; teacherId?: any }): HomeClassSummary {
     const { courseId, teacherId, status, schedule, name } = section;
@@ -127,6 +137,8 @@ export class HomeService {
     const instructor = teacherId?.fullName || teacherId?.email || 'TBD';
     const { label, room, lessonCount } = formatSchedule(schedule);
     const progress = typeof status === 'string' ? PROGRESS_BY_STATUS[status] ?? 40 : 40;
+    const totalLessons = Math.max(lessonCount || 12, 12);
+    const completedLessons = Math.max(1, Math.round((progress / 100) * totalLessons));
 
     return {
       id: String(section._id),
@@ -136,7 +148,7 @@ export class HomeService {
       progress,
       schedule: label,
       room,
-      lessonProgress: String(lessonCount),
+      lessonProgress: `${completedLessons}/${totalLessons}`,
     };
   }
 
@@ -274,6 +286,25 @@ export class HomeService {
       assignments: assignmentSummaries,
       notifications: notificationSummaries,
       courses: publicCourses,
+    };
+  }
+
+  async getMonitoringClasses(options?: { keyword?: string; page?: number; limit?: number }): Promise<HomeClassListPayload> {
+    const page = Math.max(1, options?.page ?? 1);
+    const limit = Math.min(50, Math.max(1, options?.limit ?? DEFAULT_MONITORING_LIMIT));
+    const keyword = options?.keyword?.trim() || undefined;
+
+    const { data: courseDocs = [], total } = await getPublicCoursesUseCase.execute(keyword, page, limit);
+
+    const classes = courseDocs.map((course) => this.mapEnrolledCourseToClass(course));
+
+    return {
+      classes,
+      pagination: {
+        page,
+        limit,
+        total,
+      },
     };
   }
 }
