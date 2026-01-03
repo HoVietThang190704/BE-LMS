@@ -28,6 +28,7 @@ import homeRoutes from './routes/home';
 import exercisesRoutes from './routes/exercises';
 import exerciseProblemsRoutes from './routes/exercise-problems';
 import examsRoutes from './routes/exams';
+import ticketRoutes from './routes/tickets';
 
 const app = express();
 
@@ -127,6 +128,7 @@ app.use('/api/home', homeRoutes);
 app.use('/api/exercises', exercisesRoutes);
 app.use('/api/exercise-problems', exerciseProblemsRoutes);
 app.use('/api/exams', examsRoutes);
+app.use('/api/tickets', ticketRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
 
