@@ -1,6 +1,3 @@
-import { Ticket } from '../../../models/Ticket';
-import { TicketComment } from '../../../models/TicketComment';
-
 export interface TicketDTO {
   id: string;
   ticketNumber?: string | null;
@@ -27,6 +24,11 @@ export interface TicketDTO {
   updatedAt: string;
 }
 
+const resolveUserName = (user: any): string | null => {
+  if (!user || typeof user !== 'object') return null;
+  return user.fullName || user.name || user.email || null;
+};
+
 export class TicketMapper {
   static toDTO(doc: any): TicketDTO {
     return {
@@ -38,16 +40,16 @@ export class TicketMapper {
       priority: doc.priority,
       status: doc.status,
       createdBy: doc.created_by ? (typeof doc.created_by === 'object' && doc.created_by?._id ? String(doc.created_by._id) : String(doc.created_by)) : '',
-      createdByName: doc.created_by && typeof doc.created_by === 'object' && doc.created_by.name ? doc.created_by.name : null,
+      createdByName: resolveUserName(doc.created_by),
       assignedTo: doc.assigned_to ? (typeof doc.assigned_to === 'object' && doc.assigned_to?._id ? String(doc.assigned_to._id) : String(doc.assigned_to)) : null,
-      assignedToName: doc.assigned_to && typeof doc.assigned_to === 'object' && doc.assigned_to.name ? doc.assigned_to.name : null,
-      relatedShopId: doc.related_shop_id ? String(doc.related_shop_id) : null,
-  relatedShopReference: doc.related_shop_reference || null,
-      relatedOrderId: doc.related_order_id ? String(doc.related_order_id) : null,
-  relatedOrderReference: doc.related_order_reference || null,
+      assignedToName: resolveUserName(doc.assigned_to),
+        relatedShopId: doc.related_shop_id ? String(doc.related_shop_id) : null,
+        relatedShopReference: doc.related_shop_reference || null,
+        relatedOrderId: doc.related_order_id ? String(doc.related_order_id) : null,
+        relatedOrderReference: doc.related_order_reference || null,
       tags: doc.tags || [],
       attachments: doc.attachments || [],
-  commentsCount: doc.comments_count || 0,
+        commentsCount: doc.comments_count || 0,
       isPublic: !!doc.is_public,
       resolutionMessage: doc.resolution_message || null,
       resolvedAt: doc.resolved_at ? new Date(doc.resolved_at).toISOString() : null,
