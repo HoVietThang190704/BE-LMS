@@ -7,6 +7,7 @@ import { GetPublicCoursesUseCase } from '../../domain/usecases/course/GetPublicC
 import { ICourse } from '../../domain/entities/Course.entity';
 import { EnrollmentRepository } from '../../data/repositories/EnrollmentRepository';
 import { GetEnrollmentsByUserUseCase } from '../../domain/usecases/enrollment/GetEnrollmentsByUser.usecase';
+import { progressService, CourseProgressSummary } from '../ProgressService';
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DEFAULT_CLASS_LIMIT = 4;
@@ -177,10 +178,12 @@ export class HomeService {
     return Math.min(90, Math.max(25, base));
   }
 
-  private mapEnrolledCourseToClass(course: ICourse): HomeClassSummary {
-    const progress = this.deriveProgressFromCourse(course);
-    const totalLessons = 30;
-    const learnedLessons = Math.max(1, Math.round((progress / 100) * totalLessons));
+  private mapEnrolledCourseToClass(course: ICourse, progressData?: CourseProgressSummary): HomeClassSummary {
+    // Sử dụng tiến độ thực từ progressService nếu có, nếu không dùng giá trị mặc định
+    const progress = progressData?.progressPercent ?? 0;
+    const totalExercises = progressData?.totalExercises ?? 0;
+    const completedExercises = progressData?.completedExercises ?? 0;
+    
     return {
       id: String(course._id || course.code || course.name),
       courseCode: course.code,
@@ -189,7 +192,7 @@ export class HomeService {
       progress,
       schedule: course.schedule || '',
       room: course.room || '',
-      lessonProgress: `${learnedLessons}/${totalLessons}`,
+      lessonProgress: `${completedExercises}/${totalExercises}`,
     };
   }
 
@@ -214,6 +217,10 @@ export class HomeService {
   }
 
   async getDashboard(userId?: string | null): Promise<HomeDashboardPayload> {
+    const userProfilePromise = userId
+      ? User.findById(userId).lean()
+      : User.findOne().sort({ createdAt: 1 }).lean();
+
     const [sections, totalSections, completedSections, tickets, pendingAssignments, notifications, userRecord, enrollments] = await Promise.all([
       SectionModel.find()
         .sort({ startDate: -1 })
@@ -232,7 +239,7 @@ export class HomeService {
         .sort({ createdAt: -1 })
         .limit(DEFAULT_NOTIFICATION_LIMIT)
         .lean(),
-      User.findOne().sort({ createdAt: 1 }).lean(),
+      userProfilePromise,
       userId ? getEnrollmentsByUserUseCase.execute(userId) : [],
     ]);
 
@@ -247,10 +254,28 @@ export class HomeService {
       }).filter(Boolean)
     );
 
+    // Lấy tiến độ thực của từng course đã đăng ký
+    let progressMap = new Map<string, CourseProgressSummary>();
+    if (userId && enrolledCourseIds.size > 0) {
+      try {
+        progressMap = await progressService.getMultipleCoursesProgress(
+          Array.from(enrolledCourseIds) as string[],
+          userId
+        );
+      } catch (error) {
+        console.warn('[HomeService] Failed to get progress for courses:', error);
+      }
+    }
+
     const enrolledClasses = (enrollments as any[]) 
-      .map((item) => (item as any).course)
-      .filter(Boolean)
-      .map((course: ICourse) => this.mapEnrolledCourseToClass(course));
+      .map((item) => {
+        const course = (item as any).course;
+        if (!course) return null;
+        const courseId = course._id?.toString?.() || course.id || (item as any).courseId;
+        const progressData = progressMap.get(String(courseId));
+        return this.mapEnrolledCourseToClass(course as ICourse, progressData);
+      })
+      .filter(Boolean) as HomeClassSummary[];
 
     const classes = enrolledClasses.length > 0
       ? enrolledClasses

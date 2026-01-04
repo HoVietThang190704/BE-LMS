@@ -24,6 +24,9 @@ export const createCourseSchema = z.object({
         tags: z.array(z.string())
             .optional()
             .default([]),
+        visibility: z.enum(['public','private']).optional().default('public'),
+        requireApproval: z.boolean().optional().default(false),
+        invitationCode: z.string().trim().min(6).max(20).transform((val) => val.toUpperCase()).optional(),
         credits: z.number().int().positive().optional(),
         instructor: z.string().optional(),
         schedule: z.string().optional(),
@@ -50,6 +53,8 @@ export const updateCourseSchema = z.object({
             
         tags: z.array(z.string())
             .optional(),
+        visibility: z.enum(['public','private']).optional(),
+        requireApproval: z.boolean().optional(),
         credits: z.number().int().positive().optional(),
         instructor: z.string().optional(),
         schedule: z.string().optional(),

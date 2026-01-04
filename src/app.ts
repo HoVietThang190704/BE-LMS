@@ -29,7 +29,11 @@ import homeRoutes from './routes/home';
 import exercisesRoutes from './routes/exercises';
 import exerciseProblemsRoutes from './routes/exercise-problems';
 import examsRoutes from './routes/exams';
-import ticketRoutes from './routes/tickets';
+import quizExercisesRoutes from './routes/quiz-exercises';
+import practiceExercisesRoutes from './routes/practice-exercises';
+import classroomRoutes from './routes/classroom';
+import gradesRoutes from './routes/grades';
+import reportsRoutes from './routes/reports';
 
 const app = express();
 
@@ -125,12 +129,18 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/exercises', exercisesRoutes);
 app.use('/api/exercise-problems', exerciseProblemsRoutes);
 app.use('/api/exams', examsRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/quiz-exercises', quizExercisesRoutes);
+app.use('/api/practice-exercises', practiceExercisesRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/classroom', classroomRoutes);
+app.use('/api/grades', gradesRoutes);
+app.use('/api/reports', reportsRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
 

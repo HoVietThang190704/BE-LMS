@@ -38,9 +38,7 @@ export const updateUserRoleSchema = z.object({
         id: z.string().min(1, "ID người dùng là bắt buộc")
     }),
     body: z.object({
-        role: z.enum(['admin', 'teacher', 'student'], {
-            required_error: "Vai trò là bắt buộc"
-        })
+        role: z.enum(['admin', 'teacher', 'student'])
     })
 });
 

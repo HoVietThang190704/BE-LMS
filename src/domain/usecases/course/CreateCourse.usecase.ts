@@ -1,5 +1,9 @@
+import crypto from "crypto";
 import { Course, ICourse } from "../../entities/Course.entity";
 import { ICourseRepository } from "../../repositories/ICourseRepository";
+
+const generateInvitationCode = (length = 8) =>
+  crypto.randomBytes(Math.ceil(length / 2)).toString('hex').slice(0, length).toUpperCase();
 
 export class CreateCourseUseCase {
   constructor(private courseRepo: ICourseRepository) {}
@@ -23,6 +27,9 @@ export class CreateCourseUseCase {
       input.image,
       input.tags,
       'active', // status
+      input.visibility ?? 'public',
+      input.requireApproval ?? false,
+      input.invitationCode || generateInvitationCode(),
       input.credits,
       input.instructor,
       input.schedule,

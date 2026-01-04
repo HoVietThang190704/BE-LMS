@@ -4,6 +4,7 @@ export interface IEnrollment extends Document {
   userId: mongoose.Types.ObjectId;
   courseId: mongoose.Types.ObjectId;
   sectionId?: mongoose.Types.ObjectId | null;
+  status: 'pending' | 'approved' | 'rejected';
   enrolledAt: Date;
 }
 
@@ -11,6 +12,7 @@ const EnrollmentSchema = new Schema<IEnrollment>({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   courseId: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
   sectionId: { type: Schema.Types.ObjectId, ref: 'Section', default: null },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved', index: true },
   enrolledAt: { type: Date, default: Date.now },
 });
 

@@ -15,6 +15,9 @@ export interface ICourse {
   ownerId: string;
   tags?: string[];
   status: 'active' | 'archived';
+  visibility: 'public' | 'private';
+  requireApproval: boolean;
+  invitationCode?: string;
   credits?: number;
   instructor?: string;
   schedule?: string;
@@ -38,6 +41,9 @@ export class Course implements ICourse {
     public image?: string,
     public tags?: string[],
     public status: 'active' | 'archived' = 'active',
+    public visibility: 'public' | 'private' = 'public',
+    public requireApproval: boolean = false,
+    public invitationCode?: string,
     public credits?: number,
     public instructor?: string,
     public schedule?: string,

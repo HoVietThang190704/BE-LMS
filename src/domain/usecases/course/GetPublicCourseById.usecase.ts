@@ -6,7 +6,7 @@ export class GetPublicCourseByIdUseCase {
   async execute(id: string) {
     const course = await this.courseRepo.findById(id);
 
-    if (!course) {
+    if (!course || course.visibility === 'private') {
       throw new Error("Course not found");
     }
 
