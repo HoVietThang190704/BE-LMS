@@ -1,7 +1,25 @@
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { Server as HttpsServer } from 'https';
 import { logger } from '../../shared/utils/logger';
+
+type SupportChatSender = 'user' | 'admin';
+
+interface SupportChatSendPayload {
+  userId?: string;
+  content?: string;
+  senderId?: string;
+  senderName?: string;
+  senderRole?: SupportChatSender;
+  clientMessageId?: string;
+}
+
+interface SupportChatAck {
+  success: boolean;
+  error?: string;
+  messageId?: string;
+  clientMessageId?: string;
+}
 
 export class SocketService {
   private io: SocketIOServer;
@@ -56,6 +74,10 @@ export class SocketService {
         if (adminId) {
           socket.join(`support-chat:admin:${adminId}`);
         }
+      });
+
+      socket.on('support-chat:send-message', (payload: SupportChatSendPayload, ack?: (response: SupportChatAck) => void) => {
+        this.handleSupportChatMessage(socket, payload, ack);
       });
 
       // Handle disconnect
@@ -153,5 +175,51 @@ export class SocketService {
 
   public getIO(): SocketIOServer {
     return this.io;
+  }
+
+  private handleSupportChatMessage(
+    _socket: Socket,
+    payload: SupportChatSendPayload,
+    acknowledge?: (response: SupportChatAck) => void
+  ): void {
+    const userId = payload.userId?.trim();
+    const content = payload.content?.toString().trim();
+    const senderRole: SupportChatSender = payload.senderRole ?? 'user';
+
+    if (!userId) {
+      logger.warn('⚠️  Support chat message missing userId');
+      acknowledge?.({ success: false, error: 'Thiếu mã người dùng', clientMessageId: payload.clientMessageId });
+      return;
+    }
+
+    if (!content) {
+      acknowledge?.({ success: false, error: 'Nội dung trống', clientMessageId: payload.clientMessageId });
+      return;
+    }
+
+    const messageId = `${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const messagePayload = {
+      id: messageId,
+      userId,
+      senderId: payload.senderId ?? null,
+      senderRole,
+      senderName: payload.senderName ?? null,
+      content,
+      createdAt: new Date().toISOString(),
+      clientMessageId: payload.clientMessageId
+    };
+
+    logger.info(`💬 Support chat message from ${payload.senderName || payload.senderId || senderRole}: ${content}`);
+
+    // Echo to the specific user room and to every admin listener
+    this.io.to(`support-chat:user:${userId}`).emit('support-chat:message', messagePayload);
+    this.io.to('support-chat:admins').emit('support-chat:message', messagePayload);
+
+    // If the sender is an admin, make sure their personal channel receives the message for syncing
+    if (senderRole === 'admin' && payload.senderId) {
+      this.io.to(`support-chat:admin:${payload.senderId}`).emit('support-chat:message', messagePayload);
+    }
+
+    acknowledge?.({ success: true, messageId, clientMessageId: payload.clientMessageId });
   }
 }
