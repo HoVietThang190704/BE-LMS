@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import mongoose, { Schema, Document } from 'mongoose';
 // Import Interface từ Domain (nhớ sửa đường dẫn import cho đúng vị trí file)
 // Nếu bạn chưa tạo file Interface ở Domain thì có thể bỏ dòng import này và định nghĩa tạm 'any'
@@ -12,6 +13,15 @@ export interface CourseDocument extends Document {
   ownerId: mongoose.Types.ObjectId; // Lưu ý kiểu ObjectId của Mongoose
   tags?: string[];
   status: 'active' | 'archived';
+  visibility: 'public' | 'private';
+  requireApproval: boolean;
+  invitationCode: string;
+  instructor?: string | null;
+  schedule?: string | null;
+  room?: string | null;
+  credits?: number;
+  enrolled?: number;
+  capacity?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,6 +58,22 @@ const CourseSchema: Schema = new Schema({
     enum: ['active', 'archived'], 
     default: 'active' 
   },
+  visibility: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public',
+    index: true
+  },
+  requireApproval: {
+    type: Boolean,
+    default: false
+  },
+  invitationCode: {
+    type: String,
+    unique: true,
+    index: true,
+    required: true
+  },
   credits: { type: Number, default: 3 },
   instructor: { type: String, default: null },
   schedule: { type: String, default: null },
@@ -60,6 +86,19 @@ const CourseSchema: Schema = new Schema({
   }]
 }, { 
   timestamps: true // Tự động tạo createdAt, updatedAt
+});
+
+function generateInvitationCode(length = 8) {
+  return crypto.randomBytes(Math.ceil(length / 2)).toString('hex').slice(0, length).toUpperCase();
+}
+
+CourseSchema.pre('validate', function (next) {
+  if (!this.invitationCode) {
+    this.invitationCode = generateInvitationCode(8);
+  } else {
+    this.invitationCode = String(this.invitationCode).toUpperCase();
+  }
+  next();
 });
 
 // Tạo index text để hỗ trợ tìm kiếm theo tên hoặc code (như yêu cầu "Tìm theo name hoặc code")

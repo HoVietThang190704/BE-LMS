@@ -16,13 +16,32 @@ export class EnrollCourseUseCase {
     private courseRepo: ICourseRepository
   ) {}
 
-  async execute(userId: string, courseId: string, sectionId?: string | null): Promise<EnrollCourseResult> {
+  async executeByInvitationCode(userId: string, invitationCode: string, sectionId?: string | null): Promise<EnrollCourseResult> {
+    const course = await this.courseRepo.findByInvitationCode(invitationCode);
+    if (!course || !course._id) {
+      throw new NotFoundError('Course not found');
+    }
+    return this.execute(userId, course._id, sectionId, { invitationCode });
+  }
+
+  async execute(
+    userId: string,
+    courseId: string,
+    sectionId?: string | null,
+    options?: { invitationCode?: string }
+  ): Promise<EnrollCourseResult> {
     const course = await this.courseRepo.findById(courseId);
     if (!course) {
       throw new NotFoundError('Course not found');
     }
     if (course.status === 'archived') {
       throw new ValidationError('Course is archived');
+    }
+
+    if (course.visibility === 'private') {
+      if (!options?.invitationCode || options.invitationCode !== course.invitationCode) {
+        throw new ValidationError('Invitation code is required for this course');
+      }
     }
 
     const existing = await this.enrollmentRepo.findOne(userId, courseId);
@@ -38,9 +57,14 @@ export class EnrollCourseUseCase {
       }
     }
 
-    const enrollment = await this.enrollmentRepo.enroll(userId, courseId, sectionId ?? null);
+    const needsApproval = course.visibility === 'public' && course.requireApproval;
+    const enrollmentStatus: 'pending' | 'approved' | 'rejected' = needsApproval ? 'pending' : 'approved';
 
-    await this.courseRepo.incrementEnrolledCount(courseId, 1);
+    const enrollment = await this.enrollmentRepo.enroll(userId, courseId, sectionId ?? null, enrollmentStatus);
+
+    if (enrollmentStatus === 'approved') {
+      await this.courseRepo.incrementEnrolledCount(courseId, 1);
+    }
     const updatedCourse = (await this.courseRepo.findById(courseId)) || course;
 
     return { enrollment, course: { ...updatedCourse, enrolled: updatedCourse.enrolled ?? course.enrolled }, alreadyEnrolled: false };

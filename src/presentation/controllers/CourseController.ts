@@ -43,7 +43,7 @@ export class CourseController {
       // 1. Lấy userId từ token (thông qua hàm helper requireAuth)
       const { userId } = requireAuth(req);
       
-      const { code, name, description, tags, image, credits, instructor, schedule, room, capacity, syllabus } = req.body;
+      const { code, name, description, tags, image, credits, instructor, schedule, room, capacity, syllabus, visibility, requireApproval } = req.body;
 
       // 2. Gọi Use Case
       const newCourse = await this.createCourseUseCase.execute({
@@ -53,12 +53,15 @@ export class CourseController {
         image,
         tags,
         credits,
-        instructor,
         schedule,
         room,
         capacity,
         syllabus,
-        ownerId: userId
+        ownerId: userId,
+        visibility: visibility === 'private' ? 'private' : 'public',
+        requireApproval: Boolean(requireApproval),
+        invitationCode: req.body.invitationCode,
+        instructor: instructor || req.user?.email
       });
 
       logger.info(`New course created: ${code} by user ${userId}`);
@@ -209,10 +212,11 @@ export class CourseController {
       const userId = await resolveUserId(req);
       const enrolledIds = userId ? new Set(await this.getEnrolledCourseIdsUseCase.execute(userId)) : new Set<string>();
       const enriched = data.map((course) => {
+        const { invitationCode, ...safeCourse } = course as any;
         const courseId = course._id || course.code;
         const isEnrolled = enrolledIds.has(String(courseId));
         const tags = Array.from(new Set([...(course.tags || []), ...(isEnrolled ? ['enrolled'] : [])]));
-        return { ...course, isEnrolled, tags };
+        return { ...safeCourse, isEnrolled, tags };
       });
 
       sendSuccess(res, {
@@ -236,13 +240,14 @@ export class CourseController {
       const course = await this.getPublicCourseByIdUseCase.execute(id);
       const userId = await resolveUserId(req);
       const enrolledIds = userId ? new Set(await this.getEnrolledCourseIdsUseCase.execute(userId)) : new Set<string>();
+      const { invitationCode, ...safeCourse } = course as any;
       const courseId = course._id || course.code;
       const isEnrolled = enrolledIds.has(String(courseId));
       const tags = Array.from(new Set([...(course.tags || []), ...(isEnrolled ? ['enrolled'] : [])]));
 
       sendSuccess(res, {
         message: 'Lấy thông tin khóa học thành công',
-        data: { ...course, isEnrolled, tags }
+        data: { ...safeCourse, isEnrolled, tags }
       });
     } catch (error: any) {
       if (error.message === 'Course not found') {

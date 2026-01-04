@@ -77,7 +77,7 @@ export class CourseRepository implements ICourseRepository {
 
   // Public list (no owner filter)
   async findAll(keyword?: string, page = 1, limit = 10): Promise<{ data: ICourse[], total: number }> {
-    const query: any = { status: 'active' };
+    const query: any = { status: 'active', $or: [{ visibility: 'public' }, { visibility: { $exists: false } }] };
     if (keyword) {
       query.$or = [
         { name: { $regex: keyword, $options: 'i' } },
@@ -98,6 +98,11 @@ export class CourseRepository implements ICourseRepository {
     };
   }
 
+  async findByInvitationCode(invitationCode: string): Promise<ICourse | null> {
+    const course = await CourseModel.findOne({ invitationCode, status: 'active' }).lean();
+    return course ? this.mapToEntity(course) : null;
+  }
+
   // 3. Tìm môn học theo ID
   async findById(id: string): Promise<ICourse | null> {
     // populate owner basic info for public details
@@ -105,8 +110,8 @@ export class CourseRepository implements ICourseRepository {
     if (!course) return null;
     
     // If owner populated, ensure instructor field is set
-    if (course.ownerId && !course.instructor) {
-      course.instructor = course.ownerId.fullName || course.ownerId.email || course.instructor;
+    if ((course as any).ownerId && !(course as any).instructor) {
+      (course as any).instructor = (course as any).ownerId.fullName || (course as any).ownerId.email || (course as any).instructor;
     }
 
     // Sửa lỗi: Convert
@@ -147,6 +152,9 @@ export class CourseRepository implements ICourseRepository {
       // Ép kiểu ObjectId về string thủ công để khớp với Interface ICourse
       _id: doc._id?.toString(),
       ownerId: doc.ownerId?._id?.toString ? doc.ownerId._id.toString() : (doc.ownerId?.toString ? doc.ownerId.toString() : doc.ownerId),
+      visibility: doc.visibility || 'public',
+      requireApproval: Boolean(doc.requireApproval),
+      invitationCode: doc.invitationCode,
       credits: doc.credits,
       instructor: doc.instructor,
       schedule: doc.schedule,

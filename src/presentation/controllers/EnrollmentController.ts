@@ -13,9 +13,9 @@ export class EnrollmentController {
 
   async enroll(req: Request, res: Response): Promise<void> {
     try {
-      const { courseId, sectionId } = req.body || {};
-      if (!courseId) {
-        sendFailure(res, { status: HTTP_STATUS.BAD_REQUEST, message: 'courseId is required' });
+      const { courseId, sectionId, invitationCode } = req.body || {};
+      if (!courseId && !invitationCode) {
+        sendFailure(res, { status: HTTP_STATUS.BAD_REQUEST, message: 'courseId or invitationCode is required' });
         return;
       }
 
@@ -25,14 +25,20 @@ export class EnrollmentController {
         return;
       }
 
-      const { enrollment, course, alreadyEnrolled } = await this.enrollCourseUseCase.execute(userId, courseId, sectionId);
+      const { enrollment, course, alreadyEnrolled } = courseId
+        ? await this.enrollCourseUseCase.execute(userId, courseId, sectionId, { invitationCode })
+        : await this.enrollCourseUseCase.executeByInvitationCode(userId, invitationCode, sectionId);
 
       sendSuccess(res, {
         status: alreadyEnrolled ? HTTP_STATUS.OK : HTTP_STATUS.CREATED,
-        message: alreadyEnrolled ? 'Bạn đã đăng ký môn học này rồi' : 'Đăng ký môn học thành công',
+        message: alreadyEnrolled
+          ? 'Bạn đã đăng ký môn học này rồi'
+          : course.requireApproval
+            ? 'Đăng ký đang chờ phê duyệt từ giảng viên'
+            : 'Đăng ký môn học thành công',
         data: {
           enrollment,
-          course: { ...course, isEnrolled: true }
+          course: { ...course, isEnrolled: enrollment.status === 'approved' }
         }
       });
     } catch (error: any) {
@@ -57,6 +63,7 @@ export class EnrollmentController {
           id: item._id,
           courseId,
           userId: item.userId,
+          status: item.status,
           enrolledAt: item.enrolledAt,
           course: {
             id: courseId,
@@ -73,7 +80,7 @@ export class EnrollmentController {
             enrolled: course.enrolled,
             capacity: course.capacity,
             syllabus: course.syllabus,
-            isEnrolled: true,
+            isEnrolled: item.status === 'approved',
           }
         };
       });

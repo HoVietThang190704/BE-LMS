@@ -8,6 +8,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
+        id: string;
         userId: string;
         email: string;
         role: string;
@@ -45,6 +46,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       });
     }
     req.user = {
+      id: decoded.userId,       
       userId: decoded.userId,
       email: decoded.email,
       role: decoded.role
