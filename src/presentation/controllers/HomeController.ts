@@ -34,6 +34,23 @@ export class HomeController {
       handleControllerError(res, error, 'Không thể lấy danh sách môn học');
     }
   }
+
+  async getUpcomingExercises(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = await resolveUserId(req);
+      const daysAheadParam = req.query.days;
+      const daysAhead = daysAheadParam ? Number.parseInt(String(daysAheadParam), 10) : 7;
+
+      const exercises = await homeService.getUpcomingDeadlineExercises(
+        userId || undefined,
+        Number.isFinite(daysAhead) ? daysAhead : 7
+      );
+
+      sendSuccess(res, { data: exercises });
+    } catch (error: any) {
+      handleControllerError(res, error, 'Không thể lấy danh sách bài tập sắp hết hạn');
+    }
+  }
 }
 
 export const homeController = new HomeController();

@@ -5,5 +5,6 @@ const router = Router();
 
 router.get('/', (req, res) => homeController.getDashboard(req, res));
 router.get('/courses', (req, res) => homeController.listCourses(req, res));
+router.get('/upcoming-exercises', (req, res) => homeController.getUpcomingExercises(req, res));
 
 export default router;

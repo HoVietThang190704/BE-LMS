@@ -32,7 +32,9 @@ export const createCourseSchema = z.object({
         schedule: z.string().optional(),
         room: z.string().optional(),
         capacity: z.number().int().positive().optional(),
-        syllabus: z.array(z.object({ title: z.string().min(1), description: z.string().optional() })).optional()
+        syllabus: z.array(z.object({ title: z.string().min(1), description: z.string().optional() })).optional(),
+        startDate: z.union([z.string().datetime(), z.string().min(1), z.date()]).optional(),
+        endDate: z.union([z.string().datetime(), z.string().min(1), z.date()]).optional()
     })
 });
 
@@ -61,6 +63,8 @@ export const updateCourseSchema = z.object({
         room: z.string().optional(),
         capacity: z.number().int().positive().optional(),
         syllabus: z.array(z.object({ title: z.string().min(1), description: z.string().optional() })).optional(),
+        startDate: z.union([z.string().datetime(), z.string().min(1), z.date()]).optional(),
+        endDate: z.union([z.string().datetime(), z.string().min(1), z.date()]).optional(),
         // Cách sửa: Bỏ { errorMap... } vì gây lỗi type.
         // Zod sẽ tự báo lỗi chuẩn nếu giá trị không nằm trong enum.
         status: z.enum(["active", "archived"])
