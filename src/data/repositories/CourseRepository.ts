@@ -75,9 +75,15 @@ export class CourseRepository implements ICourseRepository {
     };
   }
 
-  // Public list (no owner filter)
   async findAll(keyword?: string, page = 1, limit = 10): Promise<{ data: ICourse[], total: number }> {
-    const query: any = { status: 'active', $or: [{ visibility: 'public' }, { visibility: { $exists: false } }] };
+    const now = new Date();
+    const query: any = { 
+      status: 'active', 
+      $or: [{ visibility: 'public' }, { visibility: { $exists: false } }],
+      $and: [
+        { $or: [{ endDate: { $exists: false } }, { endDate: null }, { endDate: { $gte: now } }] }
+      ]
+    };
     if (keyword) {
       query.$or = [
         { name: { $regex: keyword, $options: 'i' } },
@@ -164,6 +170,8 @@ export class CourseRepository implements ICourseRepository {
       syllabus: doc.syllabus,
       isEnrolled: doc.isEnrolled,
       // Đảm bảo date đúng định dạng
+      startDate: doc.startDate,
+      endDate: doc.endDate,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt
     } as ICourse;

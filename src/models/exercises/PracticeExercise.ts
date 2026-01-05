@@ -23,7 +23,9 @@ export interface IPracticeExercise extends Document {
   sampleInput?: string;
   sampleOutput?: string;
   timeLimit: number; 
-  memoryLimit: number; 
+  memoryLimit: number;
+  startDate?: Date;
+  endDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -98,6 +100,14 @@ const PracticeExerciseSchema = new Schema<IPracticeExercise>({
   memoryLimit: { 
     type: Number, 
     default: 256000 
+  },
+  startDate: {
+    type: Date,
+    default: null
+  },
+  endDate: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 PracticeExerciseSchema.index({ title: 'text', description: 'text' }, { language_override: 'none', default_language: 'none' });

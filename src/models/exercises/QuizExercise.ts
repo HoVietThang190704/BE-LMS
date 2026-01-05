@@ -27,6 +27,8 @@ export interface IQuizExercise extends Document {
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   showResultsImmediately: boolean;
+  startDate?: Date;
+  endDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -101,6 +103,14 @@ const QuizExerciseSchema = new Schema<IQuizExercise>({
   showResultsImmediately: { 
     type: Boolean, 
     default: true 
+  },
+  startDate: {
+    type: Date,
+    default: null
+  },
+  endDate: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 

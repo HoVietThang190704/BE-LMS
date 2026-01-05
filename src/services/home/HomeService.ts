@@ -8,6 +8,8 @@ import { ICourse } from '../../domain/entities/Course.entity';
 import { EnrollmentRepository } from '../../data/repositories/EnrollmentRepository';
 import { GetEnrollmentsByUserUseCase } from '../../domain/usecases/enrollment/GetEnrollmentsByUser.usecase';
 import { progressService, CourseProgressSummary } from '../ProgressService';
+import PracticeExerciseModel from '../../models/exercises/PracticeExercise';
+import QuizExerciseModel from '../../models/exercises/QuizExercise';
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DEFAULT_CLASS_LIMIT = 4;
@@ -110,6 +112,21 @@ export type HomeCourseSummary = {
   enrolled: number;
   capacity: number;
   isEnrolled?: boolean;
+  startDate?: string;
+  endDate?: string;
+  isExpired?: boolean;
+};
+
+export type UpcomingExerciseSummary = {
+  id: string;
+  type: 'practice' | 'quiz';
+  title: string;
+  courseId: string;
+  courseName: string;
+  courseCode: string;
+  endDate: string;
+  daysRemaining: number;
+  isExpired: boolean;
 };
 
 export type HomeDashboardPayload = {
@@ -198,6 +215,9 @@ export class HomeService {
 
   private mapCourse(course: ICourse, isEnrolled = false): HomeCourseSummary {
     const id = course._id?.toString() || course.code || '';
+    const now = new Date();
+    const isExpired = course.endDate ? new Date(course.endDate) < now : false;
+    
     return {
       id: String(id),
       code: course.code,
@@ -213,6 +233,9 @@ export class HomeService {
       enrolled: course.enrolled ?? 0,
       capacity: course.capacity ?? 60,
       isEnrolled,
+      startDate: course.startDate?.toISOString?.() || course.startDate as unknown as string,
+      endDate: course.endDate?.toISOString?.() || course.endDate as unknown as string,
+      isExpired,
     };
   }
 
@@ -221,7 +244,7 @@ export class HomeService {
       ? User.findById(userId).lean()
       : User.findOne().sort({ createdAt: 1 }).lean();
 
-    const [sections, totalSections, completedSections, tickets, pendingAssignments, notifications, userRecord, enrollments] = await Promise.all([
+    const [sections, totalSections, completedSections, notifications, userRecord, enrollments] = await Promise.all([
       SectionModel.find()
         .sort({ startDate: -1 })
         .limit(6)
@@ -230,11 +253,6 @@ export class HomeService {
         .lean(),
       SectionModel.countDocuments(),
       SectionModel.countDocuments({ status: 'completed' }),
-      Ticket.find()
-        .sort({ createdAt: -1 })
-        .limit(DEFAULT_ASSIGNMENT_LIMIT)
-        .lean(),
-      Ticket.countDocuments({ status: { $in: PENDING_TICKET_STATUSES } }),
       Notification.find()
         .sort({ createdAt: -1 })
         .limit(DEFAULT_NOTIFICATION_LIMIT)
@@ -244,7 +262,6 @@ export class HomeService {
     ]);
 
     const sectionDocs = (sections as unknown as Array<ISection & { courseId?: any; teacherId?: any }>) ?? [];
-    const ticketDocs = Array.isArray(tickets) ? (tickets as unknown as ITicket[]) : [];
     const notificationDocs = Array.isArray(notifications) ? (notifications as unknown as INotification[]) : [];
 
     const enrolledCourseIds = new Set(
@@ -281,7 +298,16 @@ export class HomeService {
       ? enrolledClasses
       : sectionDocs.slice(0, DEFAULT_CLASS_LIMIT).map((section) => this.mapSection(section));
 
-    const assignmentSummaries = ticketDocs.map((ticket) => this.mapTicket(ticket));
+    // Lấy bài tập sắp hết hạn từ các khóa học đã đăng ký của user
+    const upcomingExercises = await this.getUpcomingDeadlineExercises(userId || undefined);
+    const assignmentSummaries: HomeAssignmentSummary[] = upcomingExercises.map((ex) => ({
+      id: ex.id,
+      title: ex.title,
+      courseCode: ex.courseCode,
+      deadline: ex.endDate,
+      status: 'pending' as const
+    }));
+
     const notificationSummaries = notificationDocs.map((notification) => this.mapNotification(notification));
 
     const { data: courseDocs } = await getPublicCoursesUseCase.execute(undefined, 1, DEFAULT_PUBLIC_COURSE_LIMIT);
@@ -303,7 +329,7 @@ export class HomeService {
       },
       stats: {
         enrolledCourses: enrolledCourseIds.size || totalSections,
-        pendingAssignments: Number(pendingAssignments ?? 0),
+        pendingAssignments: assignmentSummaries.length,
         averageGrade: String(averageGradeValue),
         learningProgress,
       },
@@ -331,6 +357,98 @@ export class HomeService {
         total,
       },
     };
+  }
+
+
+  async getUpcomingDeadlineExercises(userId?: string, daysAhead = 7): Promise<UpcomingExerciseSummary[]> {
+    if (!userId) {
+      return [];
+    }
+
+    const now = new Date();
+    const futureDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    const enrollments = await getEnrollmentsByUserUseCase.execute(userId);
+    const enrolledCourseIds = (enrollments as any[])
+      .map((item) => {
+        const course = (item as any).course || {};
+        return course._id?.toString?.() || course.id || (item as any).courseId;
+      })
+      .filter(Boolean);
+
+    if (enrolledCourseIds.length === 0) {
+      return [];
+    }
+
+    const [practiceExercises, quizExercises] = await Promise.all([
+      PracticeExerciseModel.find({
+        courseId: { $in: enrolledCourseIds },
+        endDate: { $gte: now, $lte: futureDate }
+      }).populate('courseId', 'name code').sort({ endDate: 1 }).limit(10).lean(),
+      QuizExerciseModel.find({
+        courseId: { $in: enrolledCourseIds },
+        endDate: { $gte: now, $lte: futureDate }
+      }).populate('courseId', 'name code').sort({ endDate: 1 }).limit(10).lean()
+    ]);
+
+    const exercises: UpcomingExerciseSummary[] = [];
+
+    for (const practice of practiceExercises) {
+      const course = practice.courseId as any;
+      const endDate = practice.endDate as Date;
+      const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      exercises.push({
+        id: String(practice._id),
+        type: 'practice',
+        title: practice.title,
+        courseId: course?._id?.toString() || '',
+        courseName: course?.name || 'Unknown',
+        courseCode: course?.code || 'N/A',
+        endDate: endDate.toISOString(),
+        daysRemaining,
+        isExpired: false
+      });
+    }
+
+    for (const quiz of quizExercises) {
+      const course = quiz.courseId as any;
+      const endDate = quiz.endDate as Date;
+      const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      exercises.push({
+        id: String(quiz._id),
+        type: 'quiz',
+        title: quiz.title,
+        courseId: course?._id?.toString() || '',
+        courseName: course?.name || 'Unknown',
+        courseCode: course?.code || 'N/A',
+        endDate: endDate.toISOString(),
+        daysRemaining,
+        isExpired: false
+      });
+    }
+
+    exercises.sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+
+    return exercises.slice(0, 10);
+  }
+
+  isCourseActive(course: ICourse): { isActive: boolean; message?: string } {
+    const now = new Date();
+    
+    if (course.status === 'archived') {
+      return { isActive: false, message: 'Khóa học đã được lưu trữ' };
+    }
+
+    if (course.endDate && new Date(course.endDate) < now) {
+      return { isActive: false, message: 'Khóa học đã kết thúc' };
+    }
+
+    if (course.startDate && new Date(course.startDate) > now) {
+      return { isActive: false, message: 'Khóa học chưa bắt đầu' };
+    }
+
+    return { isActive: true };
   }
 }
 

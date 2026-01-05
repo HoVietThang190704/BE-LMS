@@ -26,6 +26,8 @@ export interface ICourse {
   capacity?: number;
   syllabus?: ISyllabusItem[];
   isEnrolled?: boolean;
+  startDate?: Date;
+  endDate?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -52,6 +54,8 @@ export class Course implements ICourse {
     public capacity?: number,
     public syllabus?: ISyllabusItem[],
     public isEnrolled?: boolean,
+    public startDate?: Date,
+    public endDate?: Date,
     public createdAt?: Date,
     public updatedAt?: Date
   ) {}

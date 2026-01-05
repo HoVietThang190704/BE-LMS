@@ -37,8 +37,11 @@ export class CreateCourseUseCase {
       input.enrolled,
       input.capacity,
       input.syllabus,
-      undefined, // createdAt
-      undefined  // updatedAt
+      undefined, 
+      input.startDate,
+      input.endDate,
+      undefined, 
+      undefined  
     );
 
     return await this.courseRepo.create(newCourse);

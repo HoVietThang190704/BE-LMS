@@ -44,7 +44,7 @@ export class CourseController {
       // 1. Lấy userId từ token (thông qua hàm helper requireAuth)
       const { userId } = requireAuth(req);
       
-      const { code, name, description, tags, image, credits, instructor, schedule, room, capacity, syllabus, visibility, requireApproval } = req.body;
+      const { code, name, description, tags, image, credits, instructor, schedule, room, capacity, syllabus, visibility, requireApproval, startDate, endDate } = req.body;
 
       // 2. Gọi Use Case
       const newCourse = await this.createCourseUseCase.execute({
@@ -62,7 +62,9 @@ export class CourseController {
         visibility: visibility === 'private' ? 'private' : 'public',
         requireApproval: Boolean(requireApproval),
         invitationCode: req.body.invitationCode,
-        instructor: instructor || req.user?.email
+        instructor: instructor || req.user?.email,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined
       });
 
       logger.info(`New course created: ${code} by user ${userId}`);

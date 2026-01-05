@@ -77,6 +77,10 @@ export class ClassroomController {
         }
       }
 
+      const now = new Date();
+      const isExpired = course.endDate ? new Date(course.endDate) < now : false;
+      const isNotStarted = course.startDate ? new Date(course.startDate) > now : false;
+
       return res.json({
         success: true,
         data: {
@@ -90,6 +94,10 @@ export class ClassroomController {
             room: course.room,
             credits: course.credits,
             totalLessons: lessons.length,
+            startDate: course.startDate,
+            endDate: course.endDate,
+            isExpired,
+            isNotStarted,
           },
           progress,
           progressDetails,

@@ -22,6 +22,8 @@ export interface CourseDocument extends Document {
   credits?: number;
   enrolled?: number;
   capacity?: number;
+  startDate?: Date;
+  endDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,6 +82,8 @@ const CourseSchema: Schema = new Schema({
   room: { type: String, default: null },
   enrolled: { type: Number, default: 0 },
   capacity: { type: Number, default: 60 },
+  startDate: { type: Date, default: null },
+  endDate: { type: Date, default: null },
   syllabus: [{
     title: { type: String },
     description: { type: String }
