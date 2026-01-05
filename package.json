@@ -48,7 +48,7 @@
   "homepage": "https://github.com/HoVietThang190704/BE_DACN_v1#readme",
   "description": "Hệ thống Backend Đồ án Chuyên ngành - Kiến trúc Microservices với API Gateway, Catalog Service và Order Service",
   "dependencies": {
-    "@elastic/elasticsearch": "^8.11.0",
+    "@elastic/elasticsearch": "^8.19.1",
     "agora-access-token": "^2.0.4",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",

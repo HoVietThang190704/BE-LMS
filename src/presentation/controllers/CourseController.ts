@@ -17,6 +17,7 @@ import {
 } from '../../shared/utils/controllerUtils';
 import { resolveUserId } from '../../shared/utils/userContext';
 import { CourseStatus } from '../../domain/repositories/ICourseRepository';
+import { courseSearchService } from '../../services/search/CourseSearchService';
 
 /**
  * Course Controller
@@ -65,6 +66,11 @@ export class CourseController {
       });
 
       logger.info(`New course created: ${code} by user ${userId}`);
+
+      // Index to Elasticsearch (best-effort, non-blocking for user)
+      courseSearchService.indexCourse(newCourse).catch((err) => {
+        logger.warn('Search index (create) failed', err);
+      });
 
       // 3. Trả về response thành công
       sendSuccess(res, {
@@ -142,6 +148,11 @@ export class CourseController {
       await this.deleteCourseUseCase.execute(id, userId);
 
       logger.info(`Course deleted: ${id} by user ${userId}`);
+
+      // Remove from Elasticsearch index (best-effort)
+      courseSearchService.removeCourse(id).catch((err) => {
+        logger.warn('Search index (delete) failed', err);
+      });
 
       sendSuccess(res, {
         message: 'Xóa môn học thành công'
@@ -271,6 +282,11 @@ export class CourseController {
       const updatedCourse = await this.updateCourseUseCase.execute(id, userId, role, updateData);
 
       logger.info(`Course updated: ${id} by user ${userId}`);
+
+      // Re-index updated course
+      courseSearchService.indexCourse(updatedCourse).catch((err) => {
+        logger.warn('Search index (update) failed', err);
+      });
 
       sendSuccess(res, {
         message: 'Cập nhật môn học thành công',
