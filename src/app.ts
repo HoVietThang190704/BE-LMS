@@ -34,6 +34,9 @@ import practiceExercisesRoutes from './routes/practice-exercises';
 import classroomRoutes from './routes/classroom';
 import gradesRoutes from './routes/grades';
 import reportsRoutes from './routes/reports';
+import classroomManagementRoutes from './routes/classroom-management';
+import searchRoutes from './routes/search';
+import { courseSearchService } from './services/search/CourseSearchService';
 
 const app = express();
 
@@ -141,6 +144,8 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/classroom', classroomRoutes);
 app.use('/api/grades', gradesRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/classroom-management', classroomManagementRoutes);
+app.use('/api/search', searchRoutes);
 // Small debug: print registered routes (non-production only)
 if (config.NODE_ENV !== 'production') {
 
@@ -302,6 +307,13 @@ async function startServer() {
         await seedExercisesIfNeeded();
       } catch (err) {
         logger.warn('🟡 Exercise seeding skipped or failed', err);
+      }
+      // Initialize Elasticsearch search service
+      try {
+        await courseSearchService.initialize();
+        logger.info('🔍 Search service initialized');
+      } catch (err) {
+        logger.warn('🟡 Elasticsearch initialization skipped or failed', err);
       }
     }).catch((error) => {
       logger.error('❌ MongoDB connection failed:', error);
