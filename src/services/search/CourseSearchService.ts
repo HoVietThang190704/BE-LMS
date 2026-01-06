@@ -443,7 +443,7 @@ class CourseSearchService {
       name: course.name,
       description: course.description,
       tags: course.tags,
-      instructor: course.instructor,
+      instructor: course.instructor ?? undefined,
       image: course.image,
       credits: course.credits,
       enrolled: course.enrolled,

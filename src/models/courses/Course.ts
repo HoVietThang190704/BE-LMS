@@ -24,6 +24,7 @@ export interface CourseDocument extends Document {
   capacity?: number;
   startDate?: Date;
   endDate?: Date;
+  syllabus?: { title?: string; description?: string }[];
   createdAt: Date;
   updatedAt: Date;
 }

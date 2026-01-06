@@ -26,13 +26,27 @@ export class SocketService {
   private livestreamRooms: Map<string, Set<string>>;
   
   constructor(server: HttpServer | HttpsServer) {
+    // Respect backend ALLOWED_ORIGINS env var for socket CORS as well
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    const corsOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // No origin (server or non-browser) - allow
+      if (!origin) return callback(null, true);
+      // Allow localhost in development
+      if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) return callback(null, true);
+      if (allowedOrigins.length === 0) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Socket CORS: origin not allowed'));
+    };
+
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: true,
+        origin: corsOrigin,
         credentials: true,
         methods: ['GET', 'POST']
       }
     });
+
     this.livestreamRooms = new Map();
     this.setupEventHandlers();
   }
