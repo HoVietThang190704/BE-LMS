@@ -74,5 +74,7 @@ export const config = {
   SSL_CA_PATH: process.env.SSL_CA_PATH || '',
 
   // Search
-  ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE || 'http://localhost:9201'
+  ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE || 'http://localhost:9201',
+  ELASTICSEARCH_API_KEY: process.env.ELASTICSEARCH_API_KEY || '',
+  ELASTICSEARCH_REJECT_UNAUTHORIZED: (process.env.ELASTICSEARCH_REJECT_UNAUTHORIZED || 'true') === 'true'
 } as const;
